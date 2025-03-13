@@ -6,7 +6,7 @@ This is the backend API for **Smart Study AI**, built with **Django** to provide
 
 ### **📥 Clone the Repository**  
 ```bash
-git clone https://github.com/Salam-Hachtoon/backend.git
+git clone https://github.com/Salam-Hackathon/backend.git
 cd backend
 ```
 
