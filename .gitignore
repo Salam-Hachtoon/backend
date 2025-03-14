@@ -189,3 +189,4 @@ tmp.py
 celerybeat-schedule
 media/
 log/
+.vscode/

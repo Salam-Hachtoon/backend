@@ -1,0 +1,11 @@
+In order to make the celery worker run the task, we need to start the worker. We can start the worker by running the following command:
+celery -A api worker --loglevel=info
+
+And we need to start the celery beat to schedule the task. We can start the celery beat by running the following command:
+celery -A api beat --loglevel=info
+
+** Note: The celery worker and celery beat should be running in the background. We can use the following command to run the celery worker and celery beat in the background:
+nohup celery -A api worker --loglevel=info &
+nohup celery -A api beat --loglevel=info &
+
+make soure to be in the app directory before running the above commands
