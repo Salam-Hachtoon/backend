@@ -67,6 +67,54 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,                # If True, blacklists the old refresh token when a new one is issued
 }
 
+# Djabgo logging settings
+LOGGING ={
+    'version': 1,
+    'disable_existing_loggers': False, # Keep the default loggers
+   'formatters': {
+        'verbose': { # Verbose log format output ['INFO 2025-03-13 12:34:56 authentication User login successful']
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': { # Simple log format output ['INFO User login successful']
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+   "handlers": {
+        # Define the file handlers for the logs
+        "info_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/info.log"),
+            "maxBytes": 5 * 1024 * 1024,  # 5MB per log file
+            "backupCount": 5,  # Keep 5 old log files
+            "formatter": "verbose",
+        },
+        "error_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/errors.log"),
+            "maxBytes": 5 * 1024 * 1024,  # 5MB per log file
+            "backupCount": 5,  # Keep 5 old log files
+            "formatter": "verbose",
+        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+   'loggers': {
+        # Define the loggers for the different parts of the application
+       'authentication': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+   }
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
