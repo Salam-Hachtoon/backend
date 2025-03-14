@@ -11,15 +11,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         email (EmailField): Unique email address used as the username.
         first_name (CharField): First name of the user, default is "Unknown".
         last_name (CharField): Last name of the user, default is "Unknown".
+        profile_picture (ImageField): Profile picture of the user, optional.
         is_active (BooleanField): Indicates whether the user is active, default is True.
         is_staff (BooleanField): Indicates whether the user has admin access, default is False.
-        objects (UserManager): Manager for handling user-related operations.
+        groups (ManyToManyField): Groups the user belongs to, related to custom user groups.
+        user_permissions (ManyToManyField): Permissions assigned to the user, related to custom user permissions.
+        objects (UserManager): Manager for the User model.
         USERNAME_FIELD (str): Field used as the unique identifier, set to 'email'.
-        REQUIRED_FIELDS (list): List of fields required when creating superusers.
+        REQUIRED_FIELDS (list): List of required fields when creating superusers, includes 'first_name' and 'last_name'.
     Methods:
-        __str__(): Returns a string representation of the user.
+        __str__(): Returns a string representation of the user with email, first name, and last name.
     """
-    
+
     email = models.EmailField(unique=True)  # Use email instead of username
     first_name = models.CharField(max_length=50, default="Unknown")
     last_name = models.CharField(max_length=50, default="Unknown")
