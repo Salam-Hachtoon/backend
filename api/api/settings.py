@@ -108,12 +108,12 @@ LOGGING ={
    'loggers': {
         # Define the loggers for the different parts of the application
        'authentication': {
-            'handlers': ['file'],
+            'handlers': ['info_file'],
             'level': 'INFO',
             'propagate': False,
         },
        'celery_tasks': {
-            'handlers': ['file'],
+            'handlers': ['info_file'],
             'level': 'INFO',
             'propagate': False,
         },
