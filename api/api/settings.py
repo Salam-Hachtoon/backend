@@ -140,6 +140,11 @@ LOGGING ={
             'level': 'INFO',
             'propagate': False,
         },
+       'user_serializer': {
+            'handlers': ['info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
    }
 }
 
