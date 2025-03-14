@@ -112,6 +112,11 @@ LOGGING ={
             'level': 'INFO',
             'propagate': False,
         },
+       'celery_tasks': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
    }
 }
 
