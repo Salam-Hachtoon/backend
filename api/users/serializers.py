@@ -9,15 +9,27 @@ logger = logging.getLogger('user_serializer')
 
 class UserSerializer(serializers.ModelSerializer):
     """
-    UserSerializer is a ModelSerializer for the User model.
-    Fields:
-        - email: The email address of the user.
-        - first_name: The first name of the user.
-        - last_name: The last name of the user.
-        - profile_picture: The profile picture of the user.
-        - password: The password of the user (write-only, minimum length of 6 characters).
+    UserSerializer is a Django REST framework serializer for the User model.
+    Attributes:
+        password (serializers.CharField): A write-only field for the user's password with a minimum length of 6 characters.
+    Meta:
+        model (User): The model that is being serialized.
+        fields (list): A list of fields to be included in the serialized output.
     Methods:
-        - create(validated_data): Creates a new user with the validated data.
+        validate_profile_picture(image):
+            Validates the profile picture to ensure it has an allowed file extension (jpg, jpeg, png) and does not exceed the maximum size of 5MB.
+            Args:
+                image (File): The profile picture file to be validated.
+            Returns:
+                File: The validated profile picture file.
+            Raises:
+                serializers.ValidationError: If the file extension is not allowed or the file size exceeds the limit.
+        create(validated_data):
+            Creates a new user with the validated data.
+            Args:
+                validated_data (dict): The validated data for creating a new user.
+            Returns:
+                User: The newly created user instance.
     """
 
     # Set the password field as write-only to prevent it from being serialized
