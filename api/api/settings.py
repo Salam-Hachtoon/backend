@@ -67,7 +67,30 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,                # If True, blacklists the old refresh token when a new one is issued
 }
 
-# Djabgo logging settings
+# Celery Settings for the background tasks #
+# Broker URL for Redis (Celery)
+CELERY_BROKER_URL = env('REDAIS_DATABASE_URL')
+
+# Store Celery task results in Redis (Optional)
+CELERY_RESULT_BACKEND = env('REDAIS_DATABASE_URL')
+
+# Import task modules for the django project app
+CELERY_IMPORTS = ("users.tasks",)
+
+# Set Celery to use the same time zone as Django
+CELERY_TIMEZONE = 'UTC'
+CELERY_ENABLE_UTC = True
+
+# Schedule the Celery task to delete expired tokens every hour
+CELERY_BEAT_SCHEDULE = {
+    'clean_expired_blacklisted_tokens_every_minute': {
+        'task': 'user.tasks.clean_expired_blacklisted_tokens',
+        'schedule': crontab(minute='*',),  # Runs at the start of every hour
+    },
+}
+
+
+# Djabgo logging settings #
 LOGGING ={
     'version': 1,
     'disable_existing_loggers': False, # Keep the default loggers
