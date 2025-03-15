@@ -42,6 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'profile_picture',
+            'password',
         ]
 
     def validate_profile_picture(self, image):
