@@ -22,6 +22,6 @@ def clean_expired_blacklisted_tokens():
         expired_tokens = BlacklistedToken.objects.filter(token__expires_at__lt=now())
         count = expired_tokens.count()
         expired_tokens.delete()
-        logging.info("Deleted {} expired blacklisted tokens.".format(count))
+        logger.info("Deleted {} expired blacklisted tokens.".format(count))
     except Exception as e:
-        logging.error("Failed to delete expired blacklisted tokens: {}".format(e))
+        logger.error("Failed to delete expired blacklisted tokens: {}".format(e))

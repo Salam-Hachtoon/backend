@@ -145,6 +145,11 @@ LOGGING ={
             'level': 'INFO',
             'propagate': False,
         },
+       'utility_functions': {
+            'handlers': ['info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
    }
 }
 
