@@ -9,21 +9,22 @@ logger = logging.getLogger('user_serializer')
 
 class UserSerializer(serializers.ModelSerializer):
     """
-    UserSerializer is a Django REST framework serializer for the User model.
-    Attributes:
-        password (serializers.CharField): A write-only field for the user's password with a minimum length of 6 characters.
-    Meta:
-        model (User): The model that is being serialized.
-        fields (list): A list of fields to be included in the serialized output.
+    UserSerializer is a Django REST framework ModelSerializer for the User model.
+    Fields:
+        email (str): The email address of the user. Required.
+        first_name (str): The first name of the user. Required.
+        last_name (str): The last name of the user. Required.
+        profile_picture (ImageField): The profile picture of the user. Optional.
+        password (str): The password of the user. Required. Write-only with a minimum length of 6 characters.
     Methods:
         validate_profile_picture(image):
-            Validates the profile picture to ensure it has an allowed file extension (jpg, jpeg, png) and does not exceed the maximum size of 5MB.
+            Validates the profile picture to ensure it has an allowed file extension (jpg, jpeg, png) and does not exceed 5MB in size.
             Args:
-                image (File): The profile picture file to be validated.
+                image (ImageField): The profile picture to validate.
             Returns:
-                File: The validated profile picture file.
+                ImageField: The validated profile picture.
             Raises:
-                serializers.ValidationError: If the file extension is not allowed or the file size exceeds the limit.
+                serializers.ValidationError: If the file extension is not allowed or the image size exceeds 5MB.
         create(validated_data):
             Creates a new user with the validated data.
             Args:
@@ -44,6 +45,12 @@ class UserSerializer(serializers.ModelSerializer):
             'profile_picture',
             'password',
         ]
+        extra_kwargs = {
+            'email': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+            'password': {'required': True},
+        }
 
     def validate_profile_picture(self, image):
         allowed_image_extensions = ['jpg', 'jpeg', 'png']
