@@ -150,6 +150,11 @@ LOGGING ={
             'level': 'INFO',
             'propagate': False,
         },
+       'models': {
+            'handlers': ['info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
    }
 }
 
