@@ -79,7 +79,7 @@ class UserModelTests(TestCase):
         self.assertEqual(admin_user.email, 'admin@example.com')
         self.assertEqual(admin_user.first_name, 'Admin')
         self.assertEqual(admin_user.last_name, 'User'),
-        self.assertEqual(self.user.gender, 'Female')
+        self.assertEqual(admin_user.gender, 'Female')
         self.assertTrue(admin_user.check_password('adminpassword123'))
         self.assertTrue(admin_user.is_active)
         self.assertTrue(admin_user.is_staff)

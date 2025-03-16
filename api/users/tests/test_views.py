@@ -1,7 +1,7 @@
 import os
 from django.urls import reverse
-from rest_framework.test import APITestCase
-from rest_framework import status
+from rest_framework.test import APITestCase # type: ignore
+from rest_framework import status # type: ignore
 from users.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
@@ -32,7 +32,7 @@ class UserSignupTests(APITestCase):
                 'email': 'testuser@example.com',
                 'password': 'testpassword123',
                 'first_name': 'Test',
-                'gender': 'Male',
+                'gender': 'M',
                 'last_name': 'User',
                 'profile_picture': SimpleUploadedFile(name='test_1.png', content=image_file.read(), content_type='image/png')
             }

@@ -2,8 +2,7 @@ import os
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError # type: ignore
-from api.users.serializers import UserSerializer
-from api.users.models import User
+from ..serializers import UserSerializer
 
 
 class UserSerializerTest(TestCase):
@@ -25,7 +24,7 @@ class UserSerializerTest(TestCase):
             'first_name': 'John',
             'last_name': 'Doe',
             'password': 'password123',
-            'gender': 'male'
+            'gender': 'M'
         }
 
     def test_valid_user_serializer(self):
@@ -47,18 +46,18 @@ class UserSerializerTest(TestCase):
         self.assertIn('password', serializer.errors)
 
     def test_validate_profile_picture_valid_image(self):
-        image_path = os.path.join(os.path.dirname(__file__), 'test_image.jpg')
+        image_path = os.path.join(os.path.dirname(__file__), 'media', 'test_1.png')
         with open(image_path, 'rb') as image_file:
-            image = SimpleUploadedFile('test_image.jpg', image_file.read(), content_type='image/jpeg')
+            image = SimpleUploadedFile('test_1.png', image_file.read(), content_type='image/png')
             data = self.valid_user_data.copy()
             data['profile_picture'] = image
             serializer = UserSerializer(data=data)
             self.assertTrue(serializer.is_valid())
 
     def test_validate_profile_picture_invalid_extension(self):
-        image_path = os.path.join(os.path.dirname(__file__), 'test_image.bmp')
+        image_path = os.path.join(os.path.dirname(__file__), 'media', 'test_2.webp')
         with open(image_path, 'rb') as image_file:
-            image = SimpleUploadedFile('test_image.bmp', image_file.read(), content_type='image/bmp')
+            image = SimpleUploadedFile('test_2.webp', image_file.read(), content_type='image/webp')
             data = self.valid_user_data.copy()
             data['profile_picture'] = image
             serializer = UserSerializer(data=data)
@@ -66,9 +65,9 @@ class UserSerializerTest(TestCase):
                 serializer.is_valid(raise_exception=True)
 
     def test_validate_profile_picture_large_image(self):
-        image_path = os.path.join(os.path.dirname(__file__), 'large_image.jpg')
+        image_path = os.path.join(os.path.dirname(__file__), 'media', 'test_3.jpg')
         with open(image_path, 'rb') as image_file:
-            image = SimpleUploadedFile('large_image.jpg', image_file.read(), content_type='image/jpeg')
+            image = SimpleUploadedFile('test_3.jpg', image_file.read(), content_type='image/jpg')
             data = self.valid_user_data.copy()
             data['profile_picture'] = image
             serializer = UserSerializer(data=data)

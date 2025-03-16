@@ -41,7 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Desfine the general fields
     MALE = 'M'
     FEMALE = 'F'
-
+    # Note that the gender in the request is ("M" or "F")
     GENDER_CHOICES = [
         (MALE, 'Male'),
         (FEMALE, 'Female'),
