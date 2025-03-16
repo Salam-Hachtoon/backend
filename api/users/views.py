@@ -68,15 +68,16 @@ def signin(request):
     """
     Handle user sign-in.
     This view function handles the sign-in process for users. It expects an HTTP request
-    containing 'email' and 'password' in the request data. If the credentials are valid,
-    it authenticates the user and generates JWT tokens for the authenticated user.
+    containing 'email' and 'password' in the request data. The function performs the following steps:
+    1. Extracts 'email' and 'password' from the request data.
+    2. Authenticates the user using the provided credentials.
+    3. If authentication fails, returns a 400 Bad Request response with an error message.
+    4. If authentication succeeds, generates JWT tokens (access and refresh tokens).
+    5. Returns a 200 OK response with the access token and sets the refresh token as an HTTP-only cookie.
     Args:
         request (HttpRequest): The HTTP request object containing user credentials.
     Returns:
-        Response: A DRF Response object containing a success message and JWT tokens if
-                  authentication is successful, or an error message if authentication fails.
-    Raises:
-        KeyError: If 'email' or 'password' is not provided in the request data.
+        Response: An HTTP response with a status code and a message.
     """
 
     try:
@@ -105,14 +106,24 @@ def signin(request):
 
     # Generate JWT tokens for the authenticated user
     access_token, refresh_token = generate_jwt_tokens(user)
-    return Response(
+    Response(
         {
             'message': 'Login successful.',
             'access_token': access_token,
-            'refresh_token': refresh_token
+            # 'refresh_token': refresh_token
         },
         status=status.HTTP_200_OK
     )
+
+    # Set refresh token as an HTTP-only cookie
+    Response.set_cookie(
+        key="refresh_token",
+        value=str(refresh_token),
+        httponly=True,  # Security feature
+        secure=True,  # Use only in HTTPS
+        samesite="Lax",  # Protect against CSRF
+    )
+    return Response
 
 
 @api_view(['POST'])
