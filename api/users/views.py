@@ -2,6 +2,7 @@ import logging
 from rest_framework.decorators import api_view, permission_classes # type: ignore
 from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
+from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from rest_framework import status # type: ignore
 from django.contrib.auth import authenticate
 from .serializers import UserSerializer
@@ -117,4 +118,43 @@ def signin(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def signout(request):
-    pass
+    """
+    Handles the signout process by blacklisting the provided refresh token.
+    Args:
+        request (Request): The HTTP request object containing the refresh token.
+    Returns:
+        Response: A response object indicating the result of the signout process.
+            - If the refresh token is not provided, returns a 400 BAD REQUEST response with an error message.
+            - If the refresh token is successfully blacklisted, returns a 200 OK response with a success message.
+            - If an error occurs during the process, returns a 400 BAD REQUEST response with an error message.
+    """
+
+    refresh_token = request.data.get('refresh_token')
+    if not refresh_token:
+        loger.error('Refresh token is required.')
+        return Response(
+            {
+                'message': 'Refresh token is required.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        # Create a token object from the refresh token and blacklist it
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response(
+            {
+                'message': 'Logout successful.'
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        # Catch any exceptions and log the error message
+        loger.error('Error logging out: {}'.format(str(e)))
+        return Response(
+            {
+                'message': 'Error logging out.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
