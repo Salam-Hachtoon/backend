@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import environ, os
+import environ, os # type: ignore
 from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
@@ -187,7 +187,9 @@ ROOT_URLCONF = 'api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'users/emails/templates'), # Add the email templates directory
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
