@@ -199,18 +199,23 @@ class UserInfoTests(APITestCase):
 
 class RefreshTokenTests(APITestCase):
     """
-    Test suite for refresh token functionality.
+    Tests for the refresh token functionality in the API.
+
     Classes:
-        RefreshTokenTests: Test cases for refresh token API endpoint.
+        RefreshTokenTests: Test case for testing the refresh token endpoint.
+
     Methods:
         setUp(self):
-            Sets up the test environment by defining the refresh token URL and creating a test user.
+            Sets up the test environment, including creating a user and generating a refresh token.
+
         test_refresh_token_success(self):
-            Tests that a new access token can be successfully generated with a valid refresh token.
-        test_refresh_token_missing_refresh_token(self):
-            Tests that attempting to generate a new access token without providing a refresh token returns a 400 status code.
-        test_refresh_token_invalid_refresh_token(self):
-            Tests that attempting to generate a new access token with an invalid refresh token returns a 400 status code.
+            Tests that a valid refresh token in cookies generates a new access token successfully.
+
+        test_refresh_token_missing(self):
+            Tests that a missing refresh token in the request results in a 400 Bad Request response.
+
+        test_refresh_token_invalid(self):
+            Tests that an invalid refresh token in cookies results in a 400 Bad Request response.
     """
 
     def setUp(self):
@@ -221,21 +226,23 @@ class RefreshTokenTests(APITestCase):
             first_name='Test',
             last_name='User'
         )
+        self.client.force_authenticate(user=self.user)
         self.refresh_token = str(RefreshToken.for_user(self.user))
 
     def test_refresh_token_success(self):
-        response = self.client.post(self.refresh_token_url, {'refresh_token': self.refresh_token}, format='json')
+        self.client.cookies['refresh_token'] = self.refresh_token  # Set the refresh token in cookies
+        response = self.client.post(self.refresh_token_url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], 'Access token generated successfully.')
         self.assertIn('access_token', response.data)
 
-    def test_refresh_token_missing_refresh_token(self):
+    def test_refresh_token_missing(self):
         response = self.client.post(self.refresh_token_url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], 'Refresh token is required.')
 
-    def test_refresh_token_invalid_refresh_token(self):
-        response = self.client.post(self.refresh_token_url, {'refresh_token': 'invalidtoken'}, format='json')
+    def test_refresh_token_invalid(self):
+        self.client.cookies['refresh_token'] = 'invalidtoken'  # Set an invalid refresh token in cookies
+        response = self.client.post(self.refresh_token_url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['message'], 'Error generating access token.')
-
+        self.assertEqual(response.data['message'], 'Invalid refresh token.')

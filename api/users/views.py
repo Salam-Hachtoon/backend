@@ -255,7 +255,7 @@ def refresh_token(request):
         loger.error('Error generating access token: {}'.format(str(e)))
         return Response(
             {
-                'message': 'Error generating access token.'
+                'message': 'Invalid refresh token.'
             },
             status=status.HTTP_400_BAD_REQUEST
         )
