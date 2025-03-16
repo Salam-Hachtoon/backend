@@ -203,3 +203,47 @@ def userinfo(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_token(request):
+    """
+    Generate a new access token using the provided refresh token.
+    Args:
+        request (Request): The HTTP request object containing the refresh token in the request data.
+    Returns:
+        Response: A Response object containing the new access token if the refresh token is valid,
+                  or an error message if the refresh token is missing or invalid.
+    Raises:
+        Exception: If there is an error generating the new access token.
+    """
+
+    refresh_token = request.data.get('refresh_token')
+    if not refresh_token:
+        loger.error('Refresh token is required.')
+        return Response(
+            {
+                'message': 'Refresh token is required.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        # Create un instance of the RefreshToken class using the provided refresh token
+        token = RefreshToken(refresh_token)
+        # Generate a new access token from the refresh token
+        access_token = str(token.access_token)
+        return Response(
+            {
+                'message': 'Access token generated successfully.',
+                'access_token': access_token
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        loger.error('Error generating access token: {}'.format(str(e)))
+        return Response(
+            {
+                'message': 'Error generating access token.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
