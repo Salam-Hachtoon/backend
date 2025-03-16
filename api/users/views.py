@@ -259,3 +259,9 @@ def refresh_token(request):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def update_account(request):
+    pass
