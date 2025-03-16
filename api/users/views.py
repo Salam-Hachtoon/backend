@@ -1,10 +1,14 @@
 import logging
 from rest_framework.decorators import api_view, permission_classes # type: ignore
 from rest_framework.response import Response # type: ignore
-from rest_framework.permissions import AllowAny # type: ignore
+from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
+from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from rest_framework import status # type: ignore
+from django.contrib.auth import authenticate
 from .serializers import UserSerializer
 from .models import User
+from .utility import generate_jwt_tokens
+
 
 # Create the looger instance for the celery tasks
 loger = logging.getLogger('requests')
@@ -53,6 +57,104 @@ def signup(request):
             {
                 'message': 'User creation failed.',
                 'errors': serializer.errors
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def signin(request):
+    """
+    Handle user sign-in.
+    This view function handles the sign-in process for users. It expects an HTTP request
+    containing 'email' and 'password' in the request data. If the credentials are valid,
+    it authenticates the user and generates JWT tokens for the authenticated user.
+    Args:
+        request (HttpRequest): The HTTP request object containing user credentials.
+    Returns:
+        Response: A DRF Response object containing a success message and JWT tokens if
+                  authentication is successful, or an error message if authentication fails.
+    Raises:
+        KeyError: If 'email' or 'password' is not provided in the request data.
+    """
+
+    try:
+        email = request.data['email']
+        password = request.data['password']
+    except KeyError:
+        loger.error('Email and password are required.')
+        return Response(
+            {
+                'message': 'Email and password are required.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Authenticate the user
+    user = authenticate(request, email=email, password=password)
+    # If the user is not authenticated, return an error response
+    if not user:
+        loger.error('Invalid credentials.')
+        return Response(
+            {
+                'message': 'Invalid credentials.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Generate JWT tokens for the authenticated user
+    access_token, refresh_token = generate_jwt_tokens(user)
+    return Response(
+        {
+            'message': 'Login successful.',
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        },
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def signout(request):
+    """
+    Handles the signout process by blacklisting the provided refresh token.
+    Args:
+        request (Request): The HTTP request object containing the refresh token.
+    Returns:
+        Response: A response object indicating the result of the signout process.
+            - If the refresh token is not provided, returns a 400 BAD REQUEST response with an error message.
+            - If the refresh token is successfully blacklisted, returns a 200 OK response with a success message.
+            - If an error occurs during the process, returns a 400 BAD REQUEST response with an error message.
+    """
+
+    refresh_token = request.data.get('refresh_token')
+    if not refresh_token:
+        loger.error('Refresh token is required.')
+        return Response(
+            {
+                'message': 'Refresh token is required.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        # Create a token object from the refresh token and blacklist it
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response(
+            {
+                'message': 'Logout successful.'
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        # Catch any exceptions and log the error message
+        loger.error('Error logging out: {}'.format(str(e)))
+        return Response(
+            {
+                'message': 'Error logging out.'
             },
             status=status.HTTP_400_BAD_REQUEST
         )
