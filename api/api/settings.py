@@ -122,6 +122,14 @@ LOGGING ={
             "backupCount": 5,  # Keep 5 old log files
             "formatter": "verbose",
         },
+        "emails_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/emails.log"),
+            "maxBytes": 5 * 1024 * 1024,  # 5MB per log file
+            "backupCount": 5,  # Keep 5 old log files
+            "formatter": "verbose",
+        },
         "error_file": {
             "level": "ERROR",
             "class": "logging.handlers.RotatingFileHandler",
@@ -165,6 +173,11 @@ LOGGING ={
         },
        'requests': {
             'handlers': ['request_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+       'emails': {
+            'handlers': ['emails_file'],
             'level': 'ERROR',
             'propagate': False,
         },

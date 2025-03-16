@@ -6,8 +6,11 @@ from django.template.loader import render_to_string
 import os
 
 
-# Create a utility function to generate JWT tokens
+# Create a utility logger
 logger = logging.getLogger('utility_functions')
+# Create un emails logger
+email_logger = logging.getLogger('emails')
+
 
 def generate_jwt_tokens(user):
     """
@@ -67,8 +70,6 @@ def send_email_with_attachments(subject, template_name, context, recipient_list,
 
         email.send(fail_silently=False)
         logger.info("Email sent successfully!")
-        return "Email sent successfully!"
 
     except Exception as e:
-        logger.error("Error sending email: {}".format(str(e)))
-        return "Error sending email: {}".format(str(e))
+        email_logger.error("Error sending email: {}".format(str(e)))
