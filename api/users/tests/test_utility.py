@@ -30,7 +30,7 @@ class SendEmailWithAttachmentsTest(TestCase):
 
         send_email_with_attachments(subject, template_name, context, recipient_list)
 
-        expected_template_path = os.path.join(settings.BASE_DIR, "user/emails/templates/{}.html".format(template_name))
+        expected_template_path = os.path.join(settings.BASE_DIR, "users/emails/templates/{}.html".format(template_name))
         mock_render_to_string.assert_called_once_with(expected_template_path, context)
         mock_email_instance.attach_alternative.assert_called_once_with("<html>HTML content with value</html>", "text/html")
         mock_email_instance.send.assert_called_once()
@@ -49,7 +49,7 @@ class SendEmailWithAttachmentsTest(TestCase):
 
         send_email_with_attachments(subject, template_name, context, recipient_list)
 
-        expected_template_path = os.path.join(settings.BASE_DIR, "user/emails/templates/{}.html".format(template_name))
+        expected_template_path = os.path.join(settings.BASE_DIR, "users/emails/templates/{}.html".format(template_name))
         mock_render_to_string.assert_called_once_with(expected_template_path, context)
         mock_email_instance.attach_alternative.assert_called_once_with("<html>HTML content with value</html>", "text/html")
         mock_email_instance.send.assert_called_once()
@@ -68,7 +68,7 @@ class SendEmailWithAttachmentsTest(TestCase):
 
         send_email_with_attachments(subject, template_name, context, recipient_list)
 
-        expected_template_path = os.path.join(settings.BASE_DIR, "user/emails/templates/{}.html".format(template_name))
+        expected_template_path = os.path.join(settings.BASE_DIR, "users/emails/templates/{}.html".format(template_name))
         mock_render_to_string.assert_called_once_with(expected_template_path, context)
         mock_email_instance.attach_alternative.assert_called_once_with("<html>HTML content with value</html>", "text/html")
         mock_email_instance.send.assert_called_once()
