@@ -1,10 +1,13 @@
 import logging
 from rest_framework.decorators import api_view, permission_classes # type: ignore
 from rest_framework.response import Response # type: ignore
-from rest_framework.permissions import AllowAny # type: ignore
+from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework import status # type: ignore
+from django.contrib.auth import authenticate
 from .serializers import UserSerializer
 from .models import User
+from .utility import generate_jwt_tokens
+
 
 # Create the looger instance for the celery tasks
 loger = logging.getLogger('requests')
@@ -61,4 +64,57 @@ def signup(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signin(request):
+    """
+    Handle user sign-in.
+    This view function handles the sign-in process for users. It expects an HTTP request
+    containing 'email' and 'password' in the request data. If the credentials are valid,
+    it authenticates the user and generates JWT tokens for the authenticated user.
+    Args:
+        request (HttpRequest): The HTTP request object containing user credentials.
+    Returns:
+        Response: A DRF Response object containing a success message and JWT tokens if
+                  authentication is successful, or an error message if authentication fails.
+    Raises:
+        KeyError: If 'email' or 'password' is not provided in the request data.
+    """
+
+    try:
+        email = request.data['email']
+        password = request.data['password']
+    except KeyError:
+        loger.error('Email and password are required.')
+        return Response(
+            {
+                'message': 'Email and password are required.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Authenticate the user
+    user = authenticate(request, email=email, password=password)
+    # If the user is not authenticated, return an error response
+    if not user:
+        loger.error('Invalid credentials.')
+        return Response(
+            {
+                'message': 'Invalid credentials.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Generate JWT tokens for the authenticated user
+    access_token, refresh_token = generate_jwt_tokens(user)
+    return Response(
+        {
+            'message': 'Login successful.',
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        },
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def signout(request):
     pass
