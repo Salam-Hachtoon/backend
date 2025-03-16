@@ -163,4 +163,43 @@ def signout(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def userinfo(request):
-    pass
+    """
+    Retrieve user information based on the provided refresh token.
+    Args:
+        request (Request): The HTTP request object containing the refresh token in the request data.
+    Returns:
+        Response: A Response object containing the user information if the refresh token is valid,
+                  or an error message if the refresh token is missing or invalid.
+    Raises:
+        Exception: If there is an error retrieving the user information.
+    """
+
+    refresh_token = request.data.get('refresh_token')
+    if not refresh_token:
+        loger.error('Refresh token is required.')
+        return Response(
+            {
+                'message': 'Refresh token is required.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        token = RefreshToken(refresh_token)
+        user = User.objects.get(id=token['user_id'])
+        serializer = UserSerializer(user)
+        return Response(
+            {
+                'message': 'User info retrieved successfully.',
+                'data': serializer.data
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        loger.error('Error retrieving user info: {}'.format(str(e)))
+        return Response(
+            {
+                'message': 'Error retrieving user info.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
