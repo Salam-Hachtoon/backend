@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import environ, os
 from pathlib import Path
+from datetime import timedelta
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,7 +42,135 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users.apps.UsersConfig',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'django_celery_beat',
 ]
+
+# Rest Framework Settings using JWT for authentication
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+# JWT Settings for the access and refresh tokens
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Set the access token expiration to 15 minutes
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Set the refresh token expiration to 7 days
+    'ROTATE_REFRESH_TOKENS': True,                   # Whether to rotate refresh tokens
+    'BLACKLIST_AFTER_ROTATION': True,                # If True, blacklists the old refresh token when a new one is issued
+}
+
+# Celery Settings for the background tasks #
+# Broker URL for Redis (Celery)
+CELERY_BROKER_URL = env('REDAIS_DATABASE_URL')
+
+# Store Celery task results in Redis (Optional)
+CELERY_RESULT_BACKEND = env('REDAIS_DATABASE_URL')
+
+# Import task modules for the django project app
+CELERY_IMPORTS = ("users.celery_tasks",)
+
+# Set Celery to use the same time zone as Django
+CELERY_TIMEZONE = 'UTC'
+CELERY_ENABLE_UTC = True
+
+# Schedule the Celery task to delete expired tokens every hour
+CELERY_BEAT_SCHEDULE = {
+    'clean_expired_blacklisted_tokens_every_minute': {
+        'task': 'users.celery_tasks.clean_expired_blacklisted_tokens',
+        'schedule': crontab(minute='*',),  # Runs at the start of every hour
+    },
+}
+
+
+# Djabgo logging settings #
+LOGGING ={
+    'version': 1,
+    'disable_existing_loggers': False, # Keep the default loggers
+   'formatters': {
+        'verbose': { # Verbose log format output ['INFO 2025-03-13 12:34:56 authentication User login successful']
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': { # Simple log format output ['INFO User login successful']
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+   "handlers": {
+        # Define the file handlers for the logs
+        "info_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/info.log"),
+            "maxBytes": 5 * 1024 * 1024,  # 5MB per log file
+            "backupCount": 5,  # Keep 5 old log files
+            "formatter": "verbose",
+        },
+        "request_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/requests.log"),
+            "maxBytes": 5 * 1024 * 1024,  # 5MB per log file
+            "backupCount": 5,  # Keep 5 old log files
+            "formatter": "verbose",
+        },
+        "error_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/errors.log"),
+            "maxBytes": 5 * 1024 * 1024,  # 5MB per log file
+            "backupCount": 5,  # Keep 5 old log files
+            "formatter": "verbose",
+        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+   'loggers': {
+        # Define the loggers for the different parts of the application
+       'authentication': {
+            'handlers': ['info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+       'celery_tasks': {
+            'handlers': ['info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+       'user_serializer': {
+            'handlers': ['info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+       'utility_functions': {
+            'handlers': ['info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+       'models': {
+            'handlers': ['info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+       'requests': {
+            'handlers': ['request_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+   }
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -120,7 +250,13 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media Settings
+MEDIA_URL = "/media/"  # Public URL for accessing media files
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # Directory where uploaded files will be stored
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# The custom user model that will handel the outh
+AUTH_USER_MODEL = 'users.User'

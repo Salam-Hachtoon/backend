@@ -172,3 +172,21 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+*.pyc
+__pycache__/
+.DS_Store
+*.sqlite3
+/env
+/venv
+db.sqlite3
+media/*
+static/*
+*.log
+*.swp
+tmp.py
+*.env
+celerybeat-schedule
+media/
+log/
+.vscode/
