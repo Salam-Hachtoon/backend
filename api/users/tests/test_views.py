@@ -2,9 +2,10 @@ import os
 from django.urls import reverse
 from rest_framework.test import APITestCase # type: ignore
 from rest_framework import status # type: ignore
-from users.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
+from ..models import User
 
 User = get_user_model()
 
@@ -107,3 +108,46 @@ class UserSignupTests(APITestCase):
             response = self.client.post(self.signin_url, {}, format='json')
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertEqual(response.data['message'], 'Email and password are required.')
+
+
+    class UserSignoutTests(APITestCase):
+        """
+        Test suite for user signout functionality.
+        Classes:
+            UserSignoutTests: Test cases for user signout API endpoint.
+        Methods:
+            setUp(self):
+                Sets up the test environment by defining the signout URL and creating a test user.
+            test_signout_success(self):
+                Tests that a user can successfully sign out with a valid refresh token.
+            test_signout_missing_refresh_token(self):
+                Tests that attempting to sign out without providing a refresh token returns a 400 status code.
+            test_signout_invalid_refresh_token(self):
+                Tests that attempting to sign out with an invalid refresh token returns a 400 status code.
+        """
+
+        def setUp(self):
+            self.signout_url = reverse('signout')
+            self.user = User.objects.create_user(
+                email='testuser@example.com',
+                password='testpassword123',
+                first_name='Test',
+                last_name='User'
+            )
+            self.client.force_authenticate(user=self.user)
+            self.refresh_token = str(RefreshToken.for_user(self.user))
+
+        def test_signout_success(self):
+            response = self.client.post(self.signout_url, {'refresh_token': self.refresh_token}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data['message'], 'Logout successful.')
+
+        def test_signout_missing_refresh_token(self):
+            response = self.client.post(self.signout_url, {}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.data['message'], 'Refresh token is required.')
+
+        def test_signout_invalid_refresh_token(self):
+            response = self.client.post(self.signout_url, {'refresh_token': 'invalidtoken'}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.data['message'], 'Error logging out.')
