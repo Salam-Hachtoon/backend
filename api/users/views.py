@@ -97,16 +97,17 @@ def signin(request):
     # If the user is not authenticated, return an error response
     if not user:
         loger.error('Invalid credentials.')
-        return Response(
+        response = Response(
             {
                 'message': 'Invalid credentials.'
             },
             status=status.HTTP_400_BAD_REQUEST
         )
+        return response
 
     # Generate JWT tokens for the authenticated user
     access_token, refresh_token = generate_jwt_tokens(user)
-    Response(
+    response = Response(
         {
             'message': 'Login successful.',
             'access_token': access_token,
@@ -116,14 +117,14 @@ def signin(request):
     )
 
     # Set refresh token as an HTTP-only cookie
-    Response.set_cookie(
+    response.set_cookie(
         key="refresh_token",
         value=str(refresh_token),
         httponly=True,  # Security feature
         secure=True,  # Use only in HTTPS
         samesite="Lax",  # Protect against CSRF
     )
-    return Response
+    return response
 
 
 @api_view(['POST'])
