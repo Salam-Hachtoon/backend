@@ -1,5 +1,5 @@
 import logging
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken # type: ignore
 from django.utils.timezone import now
 from celery import shared_task
 
