@@ -10,22 +10,27 @@ User = get_user_model()
 class UserModelTests(TestCase):
     """
     Test suite for the User model.
-    This test suite includes the following test cases:
-    - User creation and attribute validation.
-    - String representation of the User model.
-    - Email uniqueness validation.
-    - Superuser creation and attribute validation.
-    - OTP generation and validation.
-    Test Cases:
-    - setUp: Initializes a test user for use in the test cases.
-    - test_user_creation: Verifies that a user is created with the correct attributes.
-    - test_user_str_method: Checks the string representation of the user.
-    - test_user_email_unique: Ensures that the email field is unique.
-    - test_superuser_creation: Verifies that a superuser is created with the correct attributes.
-    - test_generate_otp: Tests the OTP generation method.
-    - test_verify_otp_success: Tests successful OTP verification.
-    - test_verify_otp_expired: Tests OTP verification when the OTP has expired.
-    - test_verify_otp_invalid: Tests OTP verification with an invalid OTP.
+    Classes:
+        UserModelTests: TestCase for testing the User model.
+    Methods:
+        setUp():
+            Sets up a test user for use in the test methods.
+        test_user_creation():
+            Tests the creation of a user and verifies the attributes.
+        test_user_str_method():
+            Tests the __str__ method of the User model.
+        test_user_email_unique():
+            Tests that the email field is unique.
+        test_superuser_creation():
+            Tests the creation of a superuser and verifies the attributes.
+        test_generate_otp():
+            Tests the generation of a one-time password (OTP) and its attributes.
+        test_verify_otp_success():
+            Tests the successful verification of an OTP.
+        test_verify_otp_expired():
+            Tests the verification of an expired OTP.
+        test_verify_otp_invalid():
+            Tests the verification of an invalid OTP.
     """
 
     def setUp(self):
@@ -33,6 +38,7 @@ class UserModelTests(TestCase):
             email='testuser@example.com',
             first_name='Test',
             last_name='User',
+            gender='Male',
             password='testpassword123'
         )
 
@@ -40,12 +46,16 @@ class UserModelTests(TestCase):
         self.assertEqual(self.user.email, 'testuser@example.com')
         self.assertEqual(self.user.first_name, 'Test')
         self.assertEqual(self.user.last_name, 'User')
+        self.assertEqual(self.user.gender, 'Male')
         self.assertTrue(self.user.check_password('testpassword123'))
         self.assertTrue(self.user.is_active)
         self.assertFalse(self.user.is_staff)
 
     def test_user_str_method(self):
-        self.assertEqual(str(self.user), 'Email: testuser@example.com, First Name: Test, Last Name: User')
+        self.assertEqual(
+            str(self.user),
+            'Email: testuser@example.com, First Name: Test, Last Name: User, Gender: Male'
+        )
 
     def test_user_email_unique(self):
         with self.assertRaises(ValidationError):
@@ -53,6 +63,7 @@ class UserModelTests(TestCase):
                 email='testuser@example.com',
                 first_name='Test2',
                 last_name='User2',
+                gender='Male',
                 password='testpassword123'
             )
             user2.full_clean()
@@ -62,11 +73,13 @@ class UserModelTests(TestCase):
             email='admin@example.com',
             first_name='Admin',
             last_name='User',
+            gender='Female',
             password='adminpassword123'
         )
         self.assertEqual(admin_user.email, 'admin@example.com')
         self.assertEqual(admin_user.first_name, 'Admin')
-        self.assertEqual(admin_user.last_name, 'User')
+        self.assertEqual(admin_user.last_name, 'User'),
+        self.assertEqual(self.user.gender, 'Female')
         self.assertTrue(admin_user.check_password('adminpassword123'))
         self.assertTrue(admin_user.is_active)
         self.assertTrue(admin_user.is_staff)

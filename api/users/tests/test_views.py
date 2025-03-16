@@ -11,20 +11,15 @@ User = get_user_model()
 class UserSignupTests(APITestCase):
     """
     Test suite for user signup functionality.
-
     Classes:
         UserSignupTests: Test cases for user signup API endpoint.
-
     Methods:
         setUp(self):
-            Sets up the test environment with the signup URL and user data.
-
+            Sets up the test environment by defining the signup URL and user data.
         test_signup_success(self):
             Tests that a user can successfully sign up with valid data.
-
         test_signup_user_already_exists(self):
             Tests that attempting to sign up with an email that already exists returns a 400 status code.
-
         test_signup_invalid_data(self):
             Tests that attempting to sign up with invalid data returns a 400 status code and appropriate error message.
     """
@@ -37,6 +32,7 @@ class UserSignupTests(APITestCase):
                 'email': 'testuser@example.com',
                 'password': 'testpassword123',
                 'first_name': 'Test',
+                'gender': 'Male',
                 'last_name': 'User',
                 'profile_picture': SimpleUploadedFile(name='test_1.png', content=image_file.read(), content_type='image/png')
             }
