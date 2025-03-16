@@ -10,23 +10,42 @@ logger = logging.getLogger('models')
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """
-    User model that extends Django's AbstractBaseUser and PermissionsMixin.
+    """"
+    User Model
+    This model represents a user in the system and extends Django's AbstractBaseUser and PermissionsMixin classes.
+    It includes fields for user information, such as email, first name, last name, profile picture, OTP (One-Time Password),
+    and gender. The model also includes methods for generating and verifying OTPs.
     Attributes:
-        email (EmailField): Unique email address used as the username.
-        first_name (CharField): First name of the user, default is "Unknown".
-        last_name (CharField): Last name of the user, default is "Unknown".
-        profile_picture (ImageField): Profile picture of the user, optional.
-        is_active (BooleanField): Indicates whether the user is active, default is True.
-        is_staff (BooleanField): Indicates whether the user has admin access, default is False.
-        groups (ManyToManyField): Groups the user belongs to, related to custom user groups.
-        user_permissions (ManyToManyField): Permissions assigned to the user, related to custom user permissions.
+        MALE (str): Constant for male gender.
+        FEMALE (str): Constant for female gender.
+        GENDER_CHOICES (list): List of tuples representing gender choices.
+        email (EmailField): User's email address, used as the unique identifier.
+        first_name (CharField): User's first name, default is "Unknown".
+        last_name (CharField): User's last name, default is "Unknown".
+        profile_picture (ImageField): User's profile picture, optional.
+        otp (CharField): Hashed OTP for user verification, optional.
+        otp_expires_at (DateTimeField): Expiration time for the OTP, optional.
+        is_active (BooleanField): Indicates whether the user is active.
+        is_staff (BooleanField): Indicates whether the user has admin access.
+        gender (CharField): User's gender, with choices defined in GENDER_CHOICES.
+        groups (ManyToManyField): Groups the user belongs to.
+        user_permissions (ManyToManyField): Permissions assigned to the user.
         objects (UserManager): Manager for the User model.
-        USERNAME_FIELD (str): Field used as the unique identifier, set to 'email'.
-        REQUIRED_FIELDS (list): List of required fields when creating superusers, includes 'first_name' and 'last_name'.
+        USERNAME_FIELD (str): Field used as the unique identifier for authentication.
+        REQUIRED_FIELDS (list): List of required fields when creating a superuser.
     Methods:
-        __str__(): Returns a string representation of the user with email, first name, and last name.
+        generate_otp(): Generates a 6-digit OTP, hashes it, and saves it to the model instance.
+        verify_otp(otp_input): Verifies the provided OTP against the stored OTP.
+        __str__(): Returns a string representation of the user.
     """
+    # Desfine the general fields
+    MALE = 'M'
+    FEMALE = 'F'
+    # Note that the gender in the request is ("M" or "F")
+    GENDER_CHOICES = [
+        (MALE, 'Male'),
+        (FEMALE, 'Female'),
+    ]
 
     email = models.EmailField(unique=True)  # Use email instead of username
     first_name = models.CharField(max_length=50, default="Unknown")
@@ -36,6 +55,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     otp_expires_at = models.DateTimeField(blank=True, null=True)  # Expiration time
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)  # Required for admin access
+    gender = models.CharField( # Only one option can be selected here
+        max_length=1,
+        choices=GENDER_CHOICES,
+        default=MALE  # Default value (optional), coz men are asome
+    )
     # No password field is not explicitly defined
     # because it is inherited from Django's AbstractBaseUser class,
     # which provides the password field and related methods
@@ -98,8 +122,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         return True
 
     def __str__(self):
-        return "Email: {}, First Name: {}, Last Name: {}".format(
+        return "Email: {}, First Name: {}, Last Name: {}, Gender: {}".format(
             self.email,
             self.first_name,
-            self.last_name
+            self.last_name,
+            self.gender
         )

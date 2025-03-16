@@ -9,3 +9,7 @@ nohup celery -A api worker --loglevel=info &
 nohup celery -A api beat --loglevel=info &
 
 make soure to be in the app directory before running the above commands
+
+To pass all test you need to create e medi folder in the tests directory and add a file named test_1.png (eny image file) to the medi folder
+To run the tests in the app, we can run the following command:
+python manage.py test
