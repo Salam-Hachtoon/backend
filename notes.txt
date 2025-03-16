@@ -1,3 +1,30 @@
+Django Signals:
+Django provides a built-in signals framework that allows different parts of an application to communicate without tightly coupling the components.
+
+1. Model Signals (Triggered by Model Actions)
+Signal	Triggered When
+pre_save	Before a model instance is saved.
+post_save	After a model instance is saved.
+pre_delete	Before a model instance is deleted.
+post_delete	After a model instance is deleted.
+m2m_changed	When a many-to-many relationship is modified.
+pre_migrate	Before database migrations are applied.
+post_migrate	After database migrations are applied.
+2. Request/Response Signals (Triggered by HTTP Requests)
+Signal	Triggered When
+request_started	Before Django starts processing a request.
+request_finished	After Django finishes processing a request.
+got_request_exception	When an exception occurs during a request.
+3. User Authentication Signals (Triggered by Authentication Actions)
+Signal	Triggered When
+user_logged_in	When a user logs in.
+user_logged_out	When a user logs out.
+user_login_failed	When a login attempt fails.
+4. Database Signals
+Signal	Triggered When
+connection_created	When a database connection is established.
+
+#############################################################################################
 In order to make the celery worker run the task, we need to start the worker. We can start the worker by running the following command:
 celery -A api worker --loglevel=info
 

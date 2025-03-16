@@ -1,0 +1,12 @@
+Welcome to IASQ AI!
+
+Hello {{ first_name }},
+
+We’re excited to have you on board! Get ready to explore the power of AI with IASQ.
+
+If you have any questions, feel free to reach out. We’re here to help!
+
+Enjoy your journey with us!
+
+Best,  
+The IASQ AI Team
