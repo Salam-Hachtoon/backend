@@ -230,7 +230,7 @@ def refresh_token(request):
         Exception: If there is an error generating the new access token.
     """
 
-    refresh_token = request.data.get('refresh_token')
+    refresh_token = request.COOKIES.get('refresh_token')
     if not refresh_token:
         loger.error('Refresh token is required.')
         return Response(
