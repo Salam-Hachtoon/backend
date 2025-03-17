@@ -41,7 +41,24 @@ def send_email_task(subject, template_name, context, recipient_list, attachments
         recipient_list (list): A list of recipient email addresses.
         attachments (list, optional): A list of file attachments to include in the email. Defaults to None.
     Returns:
-        bool: True if the email was sent successfully, False otherwise.
+        NONE.
+    """
+    
+    return send_email_with_attachments(subject, template_name, context, recipient_list, attachments)
+
+
+@shared_task
+def send_otp_email(subject, template_name, context, recipient_list, attachments=None):
+    """
+    Sends an email with the specified subject, template, context, and recipient list, optionally including attachments.
+    Args:
+        subject (str): The subject of the email.
+        template_name (str): The name of the email template to use.
+        context (dict): A dictionary of context variables to render the template.
+        recipient_list (list): A list of recipient email addresses.
+        attachments (list, optional): A list of file attachments to include in the email. Defaults to None.
+    Returns:
+        NONE.
     """
     
     return send_email_with_attachments(subject, template_name, context, recipient_list, attachments)
