@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate
 from .serializers import UserSerializer, UserUpdateSerializer
 from .models import User
 from .utility import generate_jwt_tokens, send_email_with_attachments
-
+from celery_tasks import send_otp_email
 
 # Create the looger instance for the celery tasks
 loger = logging.getLogger('requests')
@@ -330,3 +330,4 @@ def change_password(request):
 
     # Genarate and send the OTP code to the user's email
     OTP = user.generate_otp()
+    

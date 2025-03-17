@@ -1,0 +1,12 @@
+IASQ
+
+Reset Your Password
+
+We received a request to reset your password. Use the OTP code below to verify your identity and proceed with resetting your password.
+
+OTP Code: {{opt_code}}
+
+This code is valid for 10 minutes. If you didn't request this, please ignore this email or contact support immediately.
+
+© 2025 IASQ. All rights reserved.
+Unsubscribe | Privacy Policy
