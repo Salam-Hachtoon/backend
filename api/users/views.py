@@ -7,7 +7,7 @@ from rest_framework import status # type: ignore
 from django.contrib.auth import authenticate
 from .serializers import UserSerializer, UserUpdateSerializer
 from .models import User
-from .utility import generate_jwt_tokens
+from .utility import generate_jwt_tokens, send_email_with_attachments
 
 
 # Create the looger instance for the celery tasks
@@ -306,6 +306,27 @@ def update_account(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def change_password(request):
-    pass
+    user_email = request.data.get('email')
+    if not user_email:
+        loger.error('Email is required.')
+        return Response(
+            {
+                'message': 'If an account with this email exists, a password reset link will be sent'
+            },
+            status=status.HTTP_200_OK
+        )
+
+    user = User.objects.filter(email=user_email).first()
+    if not user:
+        loger.error('User not found.')
+        return Response(
+            {
+                'message': 'If an account with this email exists, a password reset link will be sent.'
+            },
+            status=status.HTTP_200_OK
+        )
+
+    # Genarate and send the OTP code to the user's email
+    OTP = user.generate_otp()
