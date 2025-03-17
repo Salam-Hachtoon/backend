@@ -7,7 +7,7 @@ from rest_framework import status # type: ignore
 from django.contrib.auth import authenticate
 from .serializers import UserSerializer, UserUpdateSerializer
 from .models import User
-from .utility import generate_jwt_tokens, send_email_with_attachments
+from .utility import generate_jwt_tokens
 from celery_tasks import send_otp_email
 
 # Create the looger instance for the celery tasks
@@ -308,6 +308,22 @@ def update_account(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def change_password(request):
+    """
+    Handle password change requests by generating and sending an OTP code to the user's email.
+    Args:
+        request (HttpRequest): The HTTP request object containing the user's email.
+    Returns:
+        Response: A response indicating whether the password reset link will be sent if the email exists.
+    The function performs the following steps:
+    1. Retrieves the user's email from the request data.
+    2. Logs an error and returns a generic response if the email is not provided.
+    3. Searches for the user with the provided email.
+    4. Logs an error and returns a generic response if the user is not found.
+    5. Generates an OTP code for the user.
+    6. Sends the OTP code to the user's email using a Celery task.
+    7. Returns a response indicating that a password reset link will be sent if the email exists.
+    """
+
     user_email = request.data.get('email')
     if not user_email:
         loger.error('Email is required.')
@@ -330,4 +346,21 @@ def change_password(request):
 
     # Genarate and send the OTP code to the user's email
     OTP = user.generate_otp()
-    
+    subject = 'Password Reset Request - Your OTP Code'
+    # The template_name should be the same name as the email html version and plane text version
+    template_name = 'opt_code'
+    # Data to be passed to the email template from the user instance
+    context = {
+        'opt_code': OTP,
+    }
+    # Recipient list should be a list of email addresses
+    recipient_list = [user.email]
+    attachments = None
+    # Call Celery task asynchronously
+    send_otp_email.delay(subject, template_name, context, recipient_list, attachments)
+    return Response(
+        {
+            'message': 'If an account with this email exists, a password reset link will be sent.'
+        },
+        status=status.HTTP_200_OK
+    )
