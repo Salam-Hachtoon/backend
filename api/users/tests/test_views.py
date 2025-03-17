@@ -277,7 +277,8 @@ class UpdateAccountTests(APITestCase):
         self.client.force_authenticate(user=self.user)
         self.valid_data = {
             'first_name': 'UpdatedTest',
-            'last_name': 'UpdatedUser'
+            'last_name': 'UpdatedUser',
+            'password': 'updatedpassword123'
         }
         self.invalid_data = {
             'email': 'invalid-email'
