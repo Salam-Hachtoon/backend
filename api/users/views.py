@@ -262,7 +262,7 @@ def refresh_token(request):
 
 
 @api_view(['PUT'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def update_account(request):
     """
     Update the account information of the authenticated user.
@@ -303,3 +303,9 @@ def update_account(request):
         },
         status=status.HTTP_200_OK
     )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    pass
