@@ -294,7 +294,8 @@ def update_account(request):
     # Check and update the profile picture if it exists
     if 'profile_picture' in request.data:
         user.profile_picture = request.FILES['profile_picture']  # Save the image
-        serializer.save()
+    # Save the updated user data
+    serializer.save()
     return Response(
         {
             'message': 'User updated successfully.',

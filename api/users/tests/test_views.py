@@ -246,3 +246,75 @@ class RefreshTokenTests(APITestCase):
         response = self.client.post(self.refresh_token_url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], 'Invalid refresh token.')
+
+
+class UpdateAccountTests(APITestCase):
+    """
+    Test suite for updating user account information.
+    Classes:
+        UpdateAccountTests: Test cases for the update account API endpoint.
+    Methods:
+        setUp(self):
+            Sets up the test environment by defining the update account URL and creating a test user.
+        test_update_account_success(self):
+            Tests that a user can successfully update their account information with valid data.
+        test_update_account_invalid_data(self):
+            Tests that attempting to update account information with invalid data returns a 400 status code.
+        test_update_account_partial_update(self):
+            Tests that a user can successfully update partial account information.
+        test_update_account_profile_picture(self):
+            Tests that a user can successfully update their profile picture.
+    """
+
+    def setUp(self):
+        self.update_account_url = reverse('update_account')
+        self.user = User.objects.create_user(
+            email='testuser@example.com',
+            password='testpassword123',
+            first_name='Test',
+            last_name='User'
+        )
+        self.client.force_authenticate(user=self.user)
+        self.valid_data = {
+            'first_name': 'UpdatedTest',
+            'last_name': 'UpdatedUser'
+        }
+        self.invalid_data = {
+            'email': 'invalid-email'
+        }
+        self.partial_data = {
+            'first_name': 'PartialUpdate'
+        }
+        self.image_path = os.path.join(os.path.dirname(__file__), 'media', 'test_1.png')
+        with open(self.image_path, 'rb') as image_file:
+            self.profile_picture_data = {
+                'profile_picture': SimpleUploadedFile(name='test_1.png', content=image_file.read(), content_type='image/png')
+            }
+
+    def test_update_account_success(self):
+        response = self.client.put(self.update_account_url, self.valid_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'User updated successfully.')
+        self.assertIn('data', response.data)
+        self.assertEqual(response.data['data']['first_name'], 'UpdatedTest')
+        self.assertEqual(response.data['data']['last_name'], 'UpdatedUser')
+
+    def test_update_account_invalid_data(self):
+        response = self.client.put(self.update_account_url, self.invalid_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], 'User update failed.')
+        self.assertIn('errors', response.data)
+
+    def test_update_account_partial_update(self):
+        response = self.client.put(self.update_account_url, self.partial_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'User updated successfully.')
+        self.assertIn('data', response.data)
+        self.assertEqual(response.data['data']['first_name'], 'PartialUpdate')
+
+    def test_update_account_profile_picture(self):
+        response = self.client.put(self.update_account_url, self.profile_picture_data, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'User updated successfully.')
+        self.assertIn('data', response.data)
+        self.assertTrue('profile_picture' in response.data['data'])
