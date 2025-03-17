@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from rest_framework import status # type: ignore
 from django.contrib.auth import authenticate
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserUpdateSerializer
 from .models import User
 from .utility import generate_jwt_tokens
 
@@ -261,7 +261,44 @@ def refresh_token(request):
         )
 
 
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes([AllowAny])
 def update_account(request):
-    pass
+    """
+    Update the account information of the authenticated user.
+    This view handles the update of user account details. It accepts partial updates
+    and can handle profile picture updates if provided in the request.
+    Args:
+        request (HttpRequest): The HTTP request object containing user data to update.
+    Returns:
+        Response: A DRF Response object with a success or error message and the updated user data or errors.
+    Raises:
+        ValidationError: If the provided data is not valid according to the serializer.
+    Example:
+        To update user information, send a PATCH request with the updated fields to this view.
+    """
+
+    # Get the user form acc
+    user = request.user
+    # Serialize the user data and set the serializer to partial
+    serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+    if not serializer.is_valid():
+        loger.error('User update failed: {}.'.format(serializer.errors))
+        return Response(
+            {
+                'message': 'User update failed.',
+                'errors': serializer.errors
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    # Check and update the profile picture if it exists
+    if 'profile_picture' in request.data:
+        user.profile_picture = request.FILES['profile_picture']  # Save the image
+        serializer.save()
+    return Response(
+        {
+            'message': 'User updated successfully.',
+            'data': serializer.data
+        },
+        status=status.HTTP_200_OK
+    )
