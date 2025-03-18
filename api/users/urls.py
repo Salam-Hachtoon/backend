@@ -10,4 +10,5 @@ urlpatterns = [
     path('refresh_token/', views.refresh_token, name='refresh_token'),
     path('update_account/', views.update_account, name='update_account'),
     path('change_password/', views.change_password, name='change_password'),
+    path('verfy_otp/', views.verfy_otp, name='verfy_otp'),
 ]

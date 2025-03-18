@@ -364,3 +364,72 @@ def change_password(request):
         },
         status=status.HTTP_200_OK
     )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verfy_otp(request):
+    """
+    Verify the OTP code provided by the user and generate JWT tokens if successful.
+    Args:
+        request (HttpRequest): The HTTP request object containing user email and OTP code.
+    Returns:
+        Response: A DRF Response object with appropriate status and message.
+            - HTTP 400 BAD REQUEST if email or OTP code is missing.
+            - HTTP 404 NOT FOUND if the user is not found.
+            - HTTP 400 BAD REQUEST if the OTP code is invalid.
+            - HTTP 200 OK if the OTP code is valid, along with access and refresh tokens.
+    Side Effects:
+        - Logs errors if email, OTP code, or user is not found.
+        - Sets the refresh token as an HTTP-only cookie in the response.
+    """
+
+    user_email = request.data.get('email')
+    otp_code = request.data.get('otp_code')
+    if not user_email or not otp_code:
+        loger.error('Email and OTP code are required.')
+        return Response(
+            {
+                'message': 'Email and OTP code are required.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = User.objects.filter(email=user_email).first()
+    if not user:
+        loger.error('User not found.')
+        return Response(
+            {
+                'message': 'User not found.'
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Verify the OTP code
+    if not user.verify_otp(otp_code):
+        return Response(
+            {
+                'message': 'Invalid OTP code.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Generate JWT tokens for the authenticated user
+    access_token, refresh_token = generate_jwt_tokens(user)
+    response = Response(
+        {
+            'message': 'Login successful.',
+            'access_token': access_token,
+        },
+        status=status.HTTP_200_OK
+    )
+
+    # Set refresh token as an HTTP-only cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=str(refresh_token),
+        httponly=True,  # Security feature
+        secure=True,  # Use only in HTTPS
+        samesite="Lax",  # Protect against CSRF
+    )
+
+    return response
