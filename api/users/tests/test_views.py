@@ -365,3 +365,74 @@ class ChangePasswordTests(APITestCase):
         response = self.client.post(self.change_password_url, self.invalid_email, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], 'If an account with this email exists, a password reset link will be sent.')
+
+
+
+class VerifyOtpTests(APITestCase):
+    """
+    Test suite for OTP verification functionality.
+    Classes:
+        VerifyOtpTests: Test cases for OTP verification API endpoint.
+    Methods:
+        setUp(self):
+            Sets up the test environment by defining the verify OTP URL and creating a test user.
+        test_verify_otp_success(self):
+            Tests that a user can successfully verify OTP and receive JWT tokens.
+        test_verify_otp_missing_data(self):
+            Tests that attempting to verify OTP without providing email or OTP code returns a 400 status code.
+        test_verify_otp_invalid_otp(self):
+            Tests that attempting to verify OTP with an invalid OTP code returns a 400 status code.
+        test_verify_otp_user_not_found(self):
+            Tests that attempting to verify OTP with a non-existent email returns a 404 status code.
+    """
+
+    def setUp(self):
+        self.verify_otp_url = reverse('verfy_otp')
+        self.user = User.objects.create_user(
+            email='testuser@example.com',
+            password='testpassword123',
+            first_name='Test',
+            last_name='User'
+        )
+        self.valid_data = {
+            'email': 'testuser@example.com',
+            'otp_code': '123456'  # Assuming this is the valid OTP code
+        }
+        self.invalid_otp_data = {
+            'email': 'testuser@example.com',
+            'otp_code': '654321'
+        }
+        self.missing_data = {
+            'email': 'testuser@example.com'
+        }
+        self.non_existent_user_data = {
+            'email': 'nonexistent@example.com',
+            'otp_code': '123456'
+        }
+
+    def test_verify_otp_success(self):
+        self.user.generate_otp = lambda: '123456'  # Mock the OTP generation
+        self.user.save()
+        response = self.client.post(self.verify_otp_url, self.valid_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'Login successful.')
+        self.assertIn('access_token', response.data)
+        self.assertIn('refresh_token', response.cookies)
+
+    def test_verify_otp_missing_data(self):
+        response = self.client.post(self.verify_otp_url, self.missing_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], 'Email and OTP code are required.')
+
+    def test_verify_otp_invalid_otp(self):
+        self.user.generate_otp = lambda: '123456'  # Mock the OTP generation
+        self.user.save()
+        response = self.client.post(self.verify_otp_url, self.invalid_otp_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], 'Invalid OTP code.')
+
+    def test_verify_otp_user_not_found(self):
+        response = self.client.post(self.verify_otp_url, self.non_existent_user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['message'], 'User not found.')
+
