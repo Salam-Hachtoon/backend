@@ -16,7 +16,7 @@ app = Celery('api')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Set the autodiscover to True
-app.autodiscover_tasks(['users'])
+app.autodiscover_tasks()
 
 # Import periodic tasks for Celery Beat
 from celery.schedules import crontab

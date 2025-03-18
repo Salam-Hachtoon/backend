@@ -1,13 +1,14 @@
 import logging
 from rest_framework.decorators import api_view, permission_classes  # type: ignore
 from rest_framework.response import Response  # type: ignore
-from rest_framework.permissions import AllowAny  # type: ignore
+from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
+from rest_framework_simplejwt.tokens import RefreshToken  # type: ignore
 from rest_framework import status  # type: ignore
+from django.contrib.auth import authenticate
 from .serializers import UserSerializer
 from .Google_OAuth_API import exchange_code_for_token, exchange_token_for_user_info
 from .models import User
-from .utility import generate_jwt_tokens, 
-
+from .utility import generate_jwt_tokens
 
 
 # Create the looger instance for the celery tasks
@@ -62,96 +63,99 @@ def signup(request):
         )
 
 
-logger = logging.getLogger(__name__)
-
-@api_view(["GET"])
+@api_view(['POST'])
 @permission_classes([AllowAny])
-def google_auth_callback(request):
+def signin(request):
     """
-    Handle the Google OAuth callback.
-    
-    Steps:
-    1. Retrieve the authorization code from the request.
-    2. Exchange the code for tokens (access token, ID token).
-    3. Use the access token to get the user's information.
-    4. Create or update the user in the database.
-    5. Return a success response with serialized user data .
+    Handle user sign-in.
+    This view function handles the sign-in process for users. It expects an HTTP request
+    containing 'email' and 'password' in the request data. If the credentials are valid,
+    it authenticates the user and generates JWT tokens for the authenticated user.
+    Args:
+        request (HttpRequest): The HTTP request object containing user credentials.
+    Returns:
+        Response: A DRF Response object containing a success message and JWT tokens if
+                  authentication is successful, or an error message if authentication fails.
+    Raises:
+        KeyError: If 'email' or 'password' is not provided in the request data.
     """
-    # Retrieve the authorization code from query parameters
-    code = request.GET.get("code")
-    if not code:
-        logger.error("No authorization code provided in the request.")
+
+    try:
+        email = request.data['email']
+        password = request.data['password']
+    except KeyError:
+        loger.error('Email and password are required.')
         return Response(
-            {"error": "No authorization code provided"},
+            {
+                'message': 'Email and password are required.'
+            },
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Exchange the authorization code for tokens
-    tokens = exchange_code_for_token(code)
-    if tokens is None:
-        logger.error("Failed to exchange code for tokens.")
+
+    # Authenticate the user
+    user = authenticate(request, email=email, password=password)
+    # If the user is not authenticated, return an error response
+    if not user:
+        loger.error('Invalid credentials.')
         return Response(
-            {"error": "Failed to get tokens from Google"},
+            {
+                'message': 'Invalid credentials.'
+            },
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Extract the access token from the response
-    access_token = tokens.get("access_token")
-    if not access_token:
-        logger.error("No access token found in token response.")
+
+    # Generate JWT tokens for the authenticated user
+    access_token, refresh_token = generate_jwt_tokens(user)
+    return Response(
+        {
+            'message': 'Login successful.',
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        },
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def signout(request):
+    """
+    Handles the signout process by blacklisting the provided refresh token.
+    Args:
+        request (Request): The HTTP request object containing the refresh token.
+    Returns:
+        Response: A response object indicating the result of the signout process.
+            - If the refresh token is not provided, returns a 400 BAD REQUEST response with an error message.
+            - If the refresh token is successfully blacklisted, returns a 200 OK response with a success message.
+            - If an error occurs during the process, returns a 400 BAD REQUEST response with an error message.
+    """
+
+    refresh_token = request.data.get('refresh_token')
+    if not refresh_token:
+        loger.error('Refresh token is required.')
         return Response(
-            {"error": "No access token provided by Google"},
+            {
+                'message': 'Refresh token is required.'
+            },
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Exchange the access token for user info
-    user_info = exchange_token_for_user_info(access_token)
-    if user_info is None:
-        logger.error("Failed to exchange token for user info.")
+
+    try:
+        # Create a token object from the refresh token and blacklist it
+        token = RefreshToken(refresh_token)
+        token.blacklist()
         return Response(
-            {"error": "Failed to get user info from Google"},
+            {
+                'message': 'Logout successful.'
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        # Catch any exceptions and log the error message
+        loger.error('Error logging out: {}'.format(str(e)))
+        return Response(
+            {
+                'message': 'Error logging out.'
+            },
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Retrieve user information from the user_info dictionary
-    email = user_info.get("email")
-    first_name = user_info.get("first_name")
-    last_name = user_info.get("last_name")
-    profile_picture = user_info.get("profile_picture")
-    
-    if not email:
-        logger.error("No email found in Google user info.")
-        return Response(
-            {"error": "Email not found in Google user info"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Create or update the user in your database
-    user, created = User.objects.get_or_create(email=email, defaults={
-        "first_name": first_name,
-        "last_name": last_name,
-        "profile_picture": profile_picture,
-    })
-    
-    # # Optionally, update the user if information has changed
-    # if not created:
-    #     updated = False
-    #     if user.first_name != first_name:
-    #         user.first_name = first_name
-    #         updated = True
-    #     if user.last_name != last_name:
-    #         user.last_name = last_name
-    #         updated = True
-    #     if user.profile_picture != profile_picture:
-    #         user.profile_picture = profile_picture
-    #         updated = True
-    #     if updated:
-    #         user.save()
-    
-    # Serialize the user data
-    serializer = UserSerializer(user)
-    
-    return Response({
-        "message": "Authentication successful",
-        "user": serializer.data,
-    }, status=status.HTTP_200_OK)
