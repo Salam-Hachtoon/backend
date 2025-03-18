@@ -260,3 +260,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # Directory where uploaded files w
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # The custom user model that will handel the outh
 AUTH_USER_MODEL = 'users.User'
+
+
+GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET')
+GOOGLE_REDIRECT_URI = env('GOOGLE_REDIRECT_URI')
