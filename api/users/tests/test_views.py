@@ -319,3 +319,49 @@ class UpdateAccountTests(APITestCase):
         self.assertEqual(response.data['message'], 'User updated successfully.')
         self.assertIn('data', response.data)
         self.assertTrue('profile_picture' in response.data['data'])
+
+
+class ChangePasswordTests(APITestCase):
+    """
+    Test suite for change password functionality.
+    Classes:
+        ChangePasswordTests: Test cases for change password API endpoint.
+    Methods:
+        setUp(self):
+            Sets up the test environment by defining the change password URL and creating a test user.
+        test_change_password_success(self):
+            Tests that an OTP code is generated and sent to the user's email if the email exists.
+        test_change_password_missing_email(self):
+            Tests that attempting to change password without providing an email returns a 200 status code with a generic message.
+        test_change_password_user_not_found(self):
+            Tests that attempting to change password with a non-existent email returns a 200 status code with a generic message.
+    """
+
+    def setUp(self):
+        self.change_password_url = reverse('change_password')
+        self.user = User.objects.create_user(
+            email='testuser@example.com',
+            password='testpassword123',
+            first_name='Test',
+            last_name='User'
+        )
+        self.valid_email = {'email': 'testuser@example.com'}
+        self.invalid_email = {'email': 'nonexistent@example.com'}
+
+    def test_change_password_success(self):
+        with self.assertLogs('info', level='INFO') as cm:
+            response = self.client.post(self.change_password_url, self.valid_email, format='json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data['message'], 'If an account with this email exists, a password reset link will be sent.')
+            self.assertIn('message', response.data)
+            self.assertIn('Password Reset Request - Your OTP Code', cm.output[0])
+
+    def test_change_password_missing_email(self):
+        response = self.client.post(self.change_password_url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'If an account with this email exists, a password reset link will be sent.')
+
+    def test_change_password_user_not_found(self):
+        response = self.client.post(self.change_password_url, self.invalid_email, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'If an account with this email exists, a password reset link will be sent.')

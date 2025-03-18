@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate
 from .serializers import UserSerializer, UserUpdateSerializer
 from .models import User
 from .utility import generate_jwt_tokens
-from celery_tasks import send_otp_email
+from .celery_tasks import send_otp_email
 
 # Create the looger instance for the celery tasks
 loger = logging.getLogger('requests')
@@ -329,7 +329,7 @@ def change_password(request):
         loger.error('Email is required.')
         return Response(
             {
-                'message': 'If an account with this email exists, a password reset link will be sent'
+                'message': 'If an account with this email exists, a password reset link will be sent.'
             },
             status=status.HTTP_200_OK
         )

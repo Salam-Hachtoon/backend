@@ -1,21 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Welcome to IASQ AI</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to IASQ</title>
+  <style>
+    /* Embedded styles */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+    }
+    .header img {
+      max-width: 150px;
+      height: auto;
+    }
+    .content {
+      padding: 20px;
+      text-align: center;
+    }
+    .content h1 {
+      font-size: 24px;
+      color: #333333;
+      margin-bottom: 20px;
+    }
+    .content p {
+      font-size: 16px;
+      color: #555555;
+      line-height: 1.6;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #888888;
+    }
+    .footer a {
+      color: #007BFF;
+      text-decoration: none;
+    }
+  </style>
 </head>
-<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-    <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
-        <tr>
-            <td align="center">
-                <h1 style="color: #333;">Welcome to IASQ AI!</h1>
-                <p style="font-size: 16px; color: #555;">Hello {{ first_name }},</p>
-                <p style="font-size: 16px; color: #555;">We’re excited to have you on board! Get ready to explore the power of AI with IASQ.</p>
-                <p style="font-size: 16px; color: #555;">If you have any questions, feel free to reach out. We’re here to help!</p>
-                <p style="font-size: 16px; color: #555;">Enjoy your journey with us!</p>
-                <p style="font-size: 16px; color: #555;">Best, <br> The IASQ AI Team</p>
-            </td>
-        </tr>
-    </table>
+<body>
+  <div class="email-container">
+    <!-- Header with Logo -->
+    <div class="header">
+      <h1>IASQ</h1>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <h1>Hi {{first_name}}, Welcome to IASQ!</h1>
+      <p>Thank you for signing up. We're excited to have you on board and can't wait to help you achieve your goals.</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>&copy; 2025 IASQ. All rights reserved.</p>
+      <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a></p>
+    </div>
+  </div>
 </body>
 </html>
