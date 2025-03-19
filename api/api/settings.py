@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users.apps.UsersConfig',
+    'ai_assistant.apps.AiAssistantConfig',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -169,6 +170,11 @@ LOGGING ={
             'propagate': False,
         },
        'user_serializer': {
+            'handlers': ['info_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+       'attachment_serializer': {
             'handlers': ['info_file'],
             'level': 'INFO',
             'propagate': False,
