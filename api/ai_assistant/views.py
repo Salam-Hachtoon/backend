@@ -14,6 +14,16 @@ loger = logging.getLogger('requests')
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def upload_attachments(request):
+    files = request.FILES.getlist("files")
+
+    if len(files) > 3:
+        return Response(
+            {
+                "message": "Maximum file limit exceeded. Only 3 files are allowed."
+            }
+            , status=status.HTTP_400_BAD_REQUEST
+        )
+
     serializer = MultiFileUploadSerializer(data=request.data)
     if not serializer.is_valid():
         loger.error("Invalid file upload data.")

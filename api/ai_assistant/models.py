@@ -4,27 +4,22 @@ from django.conf import settings
 
 class Attachment(models.Model):
     """
-    Attachment Model
-    Represents a file attachment uploaded by a user. This model includes metadata
-    about the file, its processing status, and the extracted text content.
+    Attachment model represents a file uploaded by a user along with its associated metadata.
     Attributes:
-        CHOICE (list of tuple): Choices for the status field, representing the
-            processing state of the attachment.
-            - "processing": The file is being processed.
-            - "completed": The file has been successfully processed.
-            - "failed": The file processing failed.
-        user (ForeignKey): A reference to the user who uploaded the attachment.
-            Related to the `AUTH_USER_MODEL` with a `CASCADE` delete behavior.
-            Accessible via the `attachments` related name.
-        file (FileField): The uploaded file, stored in the `attachments/` directory.
-        extracted_text (TextField): The text extracted from the uploaded file.
-            Can be blank or null.
-        status (CharField): The processing status of the attachment. Defaults to
-            "processing". Choices are defined in the `CHOICE` attribute.
-        uploaded_at (DateTimeField): The timestamp when the file was uploaded.
-            Automatically set to the current date and time.
+        user (ForeignKey): A reference to the user who uploaded the attachment. 
+            Related to the AUTH_USER_MODEL with a cascade delete behavior.
+        file (FileField): The uploaded file stored in the 'attachments/' directory.
+        extracted_text (TextField): Optional field to store text extracted from the uploaded file.
+        batch_id (CharField): Optional field to track batch uploads using a unique identifier.
+        status (CharField): The processing status of the attachment. 
+            Choices are:
+                - "processing": The file is being processed.
+                - "completed": The file has been successfully processed.
+                - "failed": The file processing failed.
+            Defaults to "processing".
+        uploaded_at (DateTimeField): The timestamp when the file was uploaded. Automatically set on creation.
     Methods:
-        __str__(): Returns a string representation of the attachment in the format
+        __str__(): Returns a string representation of the attachment in the format 
             "<user> - <file name>".
     """
 
@@ -36,6 +31,7 @@ class Attachment(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='attachments')
     file = models.FileField(upload_to='attachments/')
     extracted_text = models.TextField(blank=True, null=True)
+    batch_id = models.CharField(max_length=50, null=True, blank=True)  # Tracks batch uploads
     status = models.CharField(
         CHOICE,
         max_length=20,
