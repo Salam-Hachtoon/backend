@@ -7,55 +7,45 @@ from .models import attachment
 logger = logging.getLogger('attachment_serializer')
 
 
-class attachmentSerializer(serializers.ModelSerializer):
+class MultiFileUploadSerializer(serializers.Serializer):
     """
-    Serializer for handling file attachments.
-    This serializer validates and processes file attachments uploaded by users. 
-    It ensures that the file meets specific requirements, such as allowed file 
-    extensions and maximum file size.
+    Serializer for handling multiple file uploads.
     Attributes:
-        Meta:
-            model (Model): The model associated with this serializer (attachment).
-            fields (list): The fields to include in the serialized output ('user', 'file').
-            extra_kwargs (dict): Additional keyword arguments for field validation.
+        files (ListField): A list of files to be uploaded. Each file is validated
+            using the `FileField` serializer. The list cannot be empty and is
+            write-only.
     Methods:
-        validate_file(file):
-            Validates the uploaded file to ensure it has an allowed extension and 
-            does not exceed the maximum file size.
-            Args:
-                file (File): The uploaded file to validate.
-            Returns:
-                File: The validated file.
-            Raises:
-                serializers.ValidationError: If the file has an unsupported extension 
-                or exceeds the maximum allowed size.
+        validate_files(files):
+            Validates each file in the uploaded list. Ensures that the file
+            extensions are among the allowed types ('pdf', 'doc', 'docx', 'txt')
+            and that the file size does not exceed 10MB. Raises a
+            `serializers.ValidationError` if any file fails validation.
     """
 
-    class Meta:
-        model = attachment
-        fields = [
-            'user',
-            'file'
-        ]
-        extra_kwargs = {
-            'user': {'required': True},
-            'file': {'required': True}
-        }
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        allow_empty=False,
+        write_only=True
+    )
 
-    def validate_file(self, file):
+    def validate_files(self, files):
+        """
+        Validate each file in the list of uploaded files.
+        """
         allowed_file_extensions = ['pdf', 'doc', 'docx', 'txt']
         allowed_file_size = 10 * 1024 * 1024  # 10MB
 
-        file_extension = os.path.splitext(file.name)[1][1:].lower()
-        if file_extension not in allowed_file_extensions:
-            logger.error('Unsupported file extension. Allowed: pdf, doc, docx, txt.')
-            raise serializers.ValidationError(
-                'Unsupported file extension. Allowed: pdf, doc, docx, txt.'
-            )
+        for file in files:
+            file_extension = os.path.splitext(file.name)[1][1:].lower()
+            if file_extension not in allowed_file_extensions:
+                logger.error(f"Unsupported file extension: {file.name}. Allowed: pdf, doc, docx, txt.")
+                raise serializers.ValidationError(
+                    "Unsupported file extension for file {}. Allowed: pdf, doc, docx, txt.".format(file.name)
+                )
 
-        if file.size > allowed_file_size:
-            logger.error('The file is too large. Max size: 10MB.')
-            raise serializers.ValidationError(
-                'The file is too large. Max size: 10MB.'
-            )
-        return file
+            if file.size > allowed_file_size:
+                logger.error("The file {} is too large. Max size: 10MB.".format(file.name))
+                raise serializers.ValidationError(
+                    "The file {} is too large. Max size: 10MB.".format(file.name)
+                )
+        return files
