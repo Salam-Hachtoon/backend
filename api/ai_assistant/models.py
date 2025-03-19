@@ -99,3 +99,47 @@ class Quiz(models.Model):
     
     def __str__(self):
         return "{} - {}".format(self.id, self.difficulty)
+
+
+class Question(models.Model):
+    """
+    Represents a question in a quiz.
+    Attributes:
+        quiz (ForeignKey): A foreign key linking the question to a specific quiz. 
+            Deletes associated questions when the quiz is deleted.
+        question_text (TextField): The text of the question.
+        correct_answer (CharField): The correct answer to the question, with a maximum length of 255 characters.
+        created_at (DateTimeField): The timestamp when the question was created, automatically set at creation.
+    Methods:
+        __str__(): Returns the text of the question as its string representation.
+    """
+
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
+    question_text = models.TextField()
+    correct_answer = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.question_text
+
+
+
+class Choice(models.Model):
+    """
+    Represents a choice for a question in the system.
+    Attributes:
+        question (ForeignKey): A foreign key to the related Question model. 
+            When the related question is deleted, all associated choices are also deleted.
+        choice_text (CharField): The text of the choice, limited to 255 characters.
+        is_correct (BooleanField): Indicates whether this choice is the correct answer 
+            for the related question. Defaults to False.
+    Methods:
+        __str__(): Returns the text of the choice as its string representation.
+    """
+
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
+    choice_text = models.CharField(max_length=255)
+    is_correct = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.choice_text
