@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from .serializers import MultiFileUploadSerializer, AttachmentSerializer
 from .models import Attachment
+from .utility import combine_completed_files_content
 
 #  Create the looger instance for the requests module
 loger = logging.getLogger('requests')
@@ -107,5 +108,15 @@ def get_summary(request):
                 "message": "No files found for batch ID: {}".format(batch_id)
             },
             status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Combine the extracted text content of all completed files
+    combined_text = combine_completed_files_content(batch_id)
+    if combined_text == 'Not all files have been processed yet.':
+        return Response(
+            {
+                "message": "Not all files have been processed yet."
+            },
+            status=status.HTTP_400_BAD_REQUEST
         )
     
