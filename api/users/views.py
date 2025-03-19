@@ -9,6 +9,7 @@ from .serializers import UserSerializer
 from .Google_OAuth_API import exchange_code_for_token, exchange_token_for_user_info
 from .models import User
 from .utility import generate_jwt_tokens
+from django.http import JsonResponse
 
 
 # Create the looger instance for the celery tasks
@@ -159,3 +160,59 @@ def signout(request):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+def google_oauth_callback(request):
+    """
+    Handles the OAuth2 callback from Google.
+    """
+    code = request.GET.get("code")
+    if not code:
+        return JsonResponse({"error": "Authorization code not provided"}, status=400)
+
+    # Step 1: Exchange code for access token
+    token_response = exchange_code_for_token(code)
+    if not token_response:
+        return JsonResponse({"error": "Failed to obtain access token"}, status=400)
+
+    access_token = token_response.get("access_token")
+
+    # Step 2: Get user info
+    user_info = exchange_token_for_user_info(access_token)
+    if not user_info:
+        return JsonResponse({"error": "Failed to obtain user info"}, status=400)
+
+    email = user_info.get("email")
+    first_name = user_info.get("given_name")
+    last_name = user_info.get("family_name")
+    profile_picture = user_info.get("picture")
+
+    # Step 3: Create or update the user
+    user, created = User.objects.get_or_create(email=email, defaults={
+        "first_name": first_name,
+        "last_name": last_name,
+        "profile_picture": profile_picture
+    })
+
+    # Step 4: Generate JWT Token
+
+    # If the user is not authenticated, return an error response
+    if not user:
+        loger.error('Invalid credentials.')
+        return Response(
+            {
+                'message': 'Invalid authentication .'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Generate JWT tokens for the authenticated user
+    access_token, refresh_token = generate_jwt_tokens(user)
+    return Response(
+        {
+            'message': 'Login successful.',
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        },
+        status=status.HTTP_200_OK
+    )

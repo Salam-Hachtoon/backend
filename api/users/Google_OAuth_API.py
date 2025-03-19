@@ -7,13 +7,13 @@ This module is responsible for makeing adapter for Google OAuth API.
 
 handling the Google Api by making manual requests to the Google OAuth API.
 steps:
-   >>> front -> redircet user to Google OAuth API 
+   >> front -> redircet user to Google OAuth API
     once user is authenticated, Google OAuth API will redirect user back to the front-end
     redirct the request to the backend >> callback URl
-    >>> backend -> make request to Google OAuth API and exchange the code for access token
-    >>> backend -> make request to Google OAuth API and exchange the access token for user info
-    >>> backend -> create user in the database if not exist 
-    >>> backend -> return JWT tokens to the front-end
+    >> backend -> make request to Google OAuth API and exchange the code for access token
+    >> backend -> make request to Google OAuth API and exchange the access token for user info
+    >> backend -> create user in the database if not exist
+    >> backend -> return JWT tokens to the front-end
 
     -- functions:
         callback(request)
@@ -49,7 +49,7 @@ def exchange_code_for_token(code):
         logging.error(f"Failed to exchange code for token: {response.json()}")
         return None
            
-    return requests
+    return response.json()
 
 
 def exchange_token_for_user_info(token):
@@ -67,9 +67,4 @@ def exchange_token_for_user_info(token):
     if response.status_code != 200:
         logging.error(f"Failed to exchange token for user info: {response.json()}")
         return None
-    return {
-        "email": response.json().get("email"),
-        "first_name": response.json().get("given_name"),
-        "last_name": response.json().get("family_name"),
-        "profile_picture": response.json().get("picture")
-    }
+    return response.json()
