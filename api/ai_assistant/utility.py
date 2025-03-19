@@ -40,7 +40,9 @@ def combine_completed_files_content(batch_id):
 
     return 
 
-def call_deepseek_ai(combined_text):
+
+
+def call_deepseek_ai_summary(combined_text):
     """"
     Sends a request to the DeepSeek AI API to generate a structured and concise summary 
     of the provided text based on predefined guidelines.
@@ -48,7 +50,7 @@ def call_deepseek_ai(combined_text):
         combined_text (str): The input text to be summarized.
     Returns:
         str: The generated summary if the API call is successful.
-        Response: An error response with the status code if the API call fails.
+        str: An error text with the status code if the API call fails.
     Raises:
         Exception: Logs an error message if the API response status code is not 200.
     Notes:
@@ -96,4 +98,4 @@ def call_deepseek_ai(combined_text):
         return summary
     else:
         logger.error("Failed to generate summary: {}".format(response.json()))
-        return Response({"error": "Failed to generate summary"}, status=response.status_code)
+        return "Failed to generate summary"

@@ -1,6 +1,6 @@
 import os, logging
 from rest_framework import serializers # type: ignore
-from .models import Attachment
+from .models import Attachment, Summary
 
 
 # Create the looger instance for the attachment model
@@ -70,3 +70,26 @@ class MultiFileUploadSerializer(serializers.Serializer):
                     "The file {} is too large. Max size: 10MB.".format(file.name)
                 )
         return files
+
+
+class SummarySerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Summary model.
+    This serializer is used to convert Summary model instances into JSON format
+    and validate incoming data for creating or updating Summary objects.
+    Fields:
+    - id (read-only): The unique identifier of the summary.
+    - user (read-only): The user associated with the summary.
+    - attachment: The file or document attached to the summary.
+    - content: The textual content of the summary.
+    - created_at (read-only): The timestamp when the summary was created.
+    Read-only fields:
+    - id
+    - user
+    - created_at
+    """
+
+    class Meta:
+        model = Summary
+        fields = ['id', 'user', 'attachment', 'content', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']

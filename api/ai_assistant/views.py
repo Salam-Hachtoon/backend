@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from .serializers import MultiFileUploadSerializer, AttachmentSerializer
 from .models import Attachment
-from .utility import combine_completed_files_content
+from .utility import combine_completed_files_content, call_deepseek_ai_summary
 
 #  Create the looger instance for the requests module
 loger = logging.getLogger('requests')
@@ -118,5 +118,14 @@ def get_summary(request):
                 "message": "Not all files have been processed yet."
             },
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+    deepseek_response = call_deepseek_ai_summary(combined_text)
+    if deepseek_response == "Failed to generate summary":
+        return Response(
+            {
+                "message": "Failed to generate summary."
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
