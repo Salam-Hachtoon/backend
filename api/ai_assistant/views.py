@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view, permission_classes # type: ignor
 from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
-from .serializers import MultiFileUploadSerializer, AttachmentSerializer
-from .models import Attachment
+from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer
+from .models import Attachment, Summary
 from .utility import combine_completed_files_content, call_deepseek_ai_summary
 
 #  Create the looger instance for the requests module
@@ -87,6 +87,34 @@ def upload_attachments(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_summary(request):
+    """
+    Handles the generation of a summary for a batch of files.
+    This view function processes a batch of files identified by a batch ID, 
+    combines their content, and generates a summary using an external AI service. 
+    The generated summary is saved to the database and returned in the response.
+    Args:
+        request (HttpRequest): The HTTP request object containing user information 
+                               and batch ID in the request data.
+    Returns:
+        Response: A Django REST framework Response object with the following:
+            - HTTP 201 Created: If the summary is successfully generated and saved.
+            - HTTP 400 Bad Request: If the batch ID is not provided or not all files 
+              in the batch have been processed.
+            - HTTP 404 Not Found: If no files are found for the given batch ID.
+            - HTTP 500 Internal Server Error: If the summary generation fails.
+    Raises:
+        KeyError: If the batch ID is not provided in the request data.
+    Workflow:
+        1. Retrieve the authenticated user from the request.
+        2. Extract the batch ID from the request data.
+        3. Query the database for attachments associated with the batch ID.
+        4. Combine the content of all completed files in the batch.
+        5. Call an external AI service to generate a summary from the combined content.
+        6. Save the generated summary to the database.
+        7. Serialize and return the summary in the response.
+    """
+
+    user = request.user  # Get the authenticated user
     try:
         batch_id = request.data.get('batch_id')
     except KeyError:
@@ -128,4 +156,19 @@ def get_summary(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    
+    # Get the attchment
+    new_summary = Summary.objects.create(
+        user=user,
+        content=deepseek_response
+    )
+    new_summary.save()
+
+    # Serialize the created summary
+    serializer = SummarySerializer(new_summary)
+    return Response(
+        {
+            "message": "Summary created successfully.",
+            "data": serializer.data
+        },
+        status=status.HTTP_201_CREATED
+    )
