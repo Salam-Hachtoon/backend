@@ -1,8 +1,11 @@
+import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import User
 from .celery_tasks import send_email_task
 
+# Create un emails logger
+email_logger = logging.getLogger('emails')
 
 @receiver(post_save, sender=User)
 def send_welcome_email(sender, instance, created, **kwargs):
@@ -35,4 +38,4 @@ def send_welcome_email(sender, instance, created, **kwargs):
         # Call Celery task asynchronously
         send_email_task.delay(subject, template_name, context, recipient_list, attachments)
     else:
-        print('No email sent')
+        email_logger.info('User instance updated: {}'.format(instance.email))
