@@ -4,20 +4,43 @@ from django.conf import settings
 
 class Attachment(models.Model):
     """
-    Attachment model represents a file uploaded by a user.
+    Attachment Model
+    Represents a file attachment uploaded by a user. This model includes metadata
+    about the file, its processing status, and the extracted text content.
     Attributes:
-        user (ForeignKey): A reference to the user who uploaded the file. 
-            It is linked to the AUTH_USER_MODEL and deletes the attachment 
-            if the user is deleted.
-        file (FileField): The uploaded file stored in the 'attachments/' directory.
-        uploaded_at (DateTimeField): The timestamp indicating when the file was uploaded.
+        CHOICE (list of tuple): Choices for the status field, representing the
+            processing state of the attachment.
+            - "processing": The file is being processed.
+            - "completed": The file has been successfully processed.
+            - "failed": The file processing failed.
+        user (ForeignKey): A reference to the user who uploaded the attachment.
+            Related to the `AUTH_USER_MODEL` with a `CASCADE` delete behavior.
+            Accessible via the `attachments` related name.
+        file (FileField): The uploaded file, stored in the `attachments/` directory.
+        extracted_text (TextField): The text extracted from the uploaded file.
+            Can be blank or null.
+        status (CharField): The processing status of the attachment. Defaults to
+            "processing". Choices are defined in the `CHOICE` attribute.
+        uploaded_at (DateTimeField): The timestamp when the file was uploaded.
+            Automatically set to the current date and time.
     Methods:
-        __str__(): Returns a string representation of the attachment in the 
-            format "user - file name".
+        __str__(): Returns a string representation of the attachment in the format
+            "<user> - <file name>".
     """
 
+    CHOICE=[
+        ("processing", "Processing"),
+        ("completed", "Completed"),
+        ("failed", "Failed")
+    ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='attachments')
     file = models.FileField(upload_to='attachments/')
+    extracted_text = models.TextField(blank=True, null=True)
+    status = models.CharField(
+        CHOICE,
+        max_length=20,
+        default="processing",
+    )
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
