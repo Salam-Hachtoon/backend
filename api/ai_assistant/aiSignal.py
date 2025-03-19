@@ -5,5 +5,5 @@ from .models import Attachment
 
 
 @receiver(post_save, sender=Attachment)
-def extract_cach_text():
+def get_text():
     pass
