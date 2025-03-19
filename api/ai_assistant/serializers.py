@@ -1,11 +1,32 @@
 import os, logging
 from rest_framework import serializers # type: ignore
-from .models import attachment
+from .models import Attachment
 
 
 # Create the looger instance for the attachment model
 logger = logging.getLogger('attachment_serializer')
 
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Attachment model.
+    This serializer is used to convert Attachment model instances into JSON format
+    and vice versa. It includes the following fields:
+    - `id`: The unique identifier of the attachment.
+    - `file`: The file associated with the attachment.
+    - `extracted_text`: The text extracted from the file (read-only).
+    - `status`: The processing status of the attachment (read-only).
+    - `uploaded_at`: The timestamp when the attachment was uploaded (read-only).
+    Read-only fields:
+    - `extracted_text`
+    - `status`
+    - `uploaded_at`
+    """
+
+    class Meta:
+        model = Attachment
+        fields = ['id', 'file', 'extracted_text', 'status', 'uploaded_at']
+        read_only_fields = ['extracted_text', 'status', 'uploaded_at']
 
 class MultiFileUploadSerializer(serializers.Serializer):
     """

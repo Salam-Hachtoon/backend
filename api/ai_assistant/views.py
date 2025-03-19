@@ -4,9 +4,8 @@ from rest_framework.decorators import api_view, permission_classes # type: ignor
 from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
-from .serializers import attachmentSerializer
-from ..users.models import User
-
+from .serializers import MultiFileUploadSerializer, AttachmentSerializer
+from .models import attachment
 
 #  Create the looger instance for the requests module
 loger = logging.getLogger('requests')
@@ -15,17 +14,35 @@ loger = logging.getLogger('requests')
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def upload_attachments(request):
-    refresh_token = request.data.get('refresh_token')
-    if not refresh_token:
-        loger.error('Refresh token is required.')
+    serializer = MultiFileUploadSerializer(data=request.data)
+    if not serializer.is_valid():
+        loger.error("Invalid file upload data.")
         return Response(
             {
-                'message': 'Refresh token is required.'
+                'message': 'Invalid file upload data.',
+                'errors': serializer.errors
             },
             status=status.HTTP_400_BAD_REQUEST
         )
-    try:
-        token = RefreshToken(refresh_token)
-        user = User.objects.get(id=token['user_id'])
-    except Exception as e:
-        pass
+
+    files = serializer.validated_data['files']  # Get the list of validated files from the serializer
+    user = request.user  # Get the authenticated user
+    attachments = []
+
+    for file in files: # Iterate over the list of files
+        # Create an attachment instance for each file
+        attachment_instance = attachment.objects.create(
+            user=user,  # Associate the attachment with the authenticated user
+            file=file,
+            status='pending'  # Default status
+        )
+        attachments.append(attachment_instance)
+
+    response_serializer = AttachmentSerializer(attachments, many=True)
+    return Response(
+        {
+            'message': 'Files uploaded successfully.',
+            'data': response_serializer.data
+        },
+        status=status.HTTP_201_CREATED
+    )
