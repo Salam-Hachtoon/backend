@@ -366,8 +366,6 @@ class ChangePasswordTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], 'If an account with this email exists, a password reset link will be sent.')
 
-
-
 class VerifyOtpTests(APITestCase):
     """
     Test suite for OTP verification functionality.
