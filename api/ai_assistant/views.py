@@ -14,6 +14,27 @@ loger = logging.getLogger('requests')
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def upload_attachments(request):
+    """
+    Handles the upload of multiple file attachments.
+    This view allows authenticated users to upload up to three files at a time.
+    It validates the uploaded files using a serializer, creates attachment
+    instances for each file, and associates them with the authenticated user.
+    Args:
+        request (HttpRequest): The HTTP request object containing the uploaded
+        files and user information.
+    Returns:
+        Response: A DRF Response object containing a success message and the
+        serialized data of the uploaded attachments if the operation is
+        successful. If the file limit is exceeded or the data is invalid, it
+        returns an error message with a 400 status code.
+    Raises:
+        None
+    Notes:
+        - The maximum number of files allowed per request is 3.
+        - Each file is associated with the authenticated user and given a
+          default status of 'pending'.
+    """
+
     files = request.FILES.getlist("files")
 
     if len(files) > 3:
