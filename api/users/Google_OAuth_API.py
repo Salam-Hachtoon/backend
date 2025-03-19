@@ -1,5 +1,5 @@
 """
-This module is responsible for makeing adapter for Google OAuth API.
+This module is responsible for making adapter for Google OAuth API.
 - manual: https://developers.google.com/identity/protocols/oauth2/web-server
 - manual: https://developers.google.com/identity/protocols/oauth2/scopes
 - manual: https://developers.google.com/identity/protocols/oauth2/openid-connect
@@ -7,9 +7,9 @@ This module is responsible for makeing adapter for Google OAuth API.
 
 handling the Google Api by making manual requests to the Google OAuth API.
 steps:
-   >> front -> redircet user to Google OAuth API
+   >> front -> redirect user to Google OAuth API
     once user is authenticated, Google OAuth API will redirect user back to the front-end
-    redirct the request to the backend >> callback URl
+    redirect the request to the backend >> callback URl
     >> backend -> make request to Google OAuth API and exchange the code for access token
     >> backend -> make request to Google OAuth API and exchange the access token for user info
     >> backend -> create user in the database if not exist
@@ -17,7 +17,7 @@ steps:
 
     -- functions:
         callback(request)
-        extange_code_for_token(code)
+        extant_code_for_token(code)
         exchange_token_for_user_info(token)
    """
 
