@@ -13,18 +13,17 @@ User = get_user_model()
 class AttachmentModelTests(TestCase):
     """
     Test suite for the Attachment model.
-    Classes:
-        AttachmentModelTests: Contains unit tests for the Attachment model.
+    This test case ensures the proper functionality of the Attachment model, including
+    its creation, field values, and string representation.
     Methods:
         setUp():
-            Sets up the test environment by creating a test user, a test file, 
-            and an Attachment instance associated with the user.
+            Sets up the test environment by creating a user and an attachment instance.
         test_attachment_creation():
-            Tests that an Attachment instance is created correctly, including 
-            the associated user, file name, and the presence of the uploaded_at timestamp.
+            Verifies that the attachment instance is created with the correct user, file,
+            status, and that the `uploaded_at` field is not None.
         test_attachment_str_method():
-            Tests the string representation of the Attachment instance to ensure 
-            it matches the expected format of "user - file_name".
+            Tests the string representation of the attachment instance to ensure it matches
+            the expected format.
     """
 
     def setUp(self):
@@ -32,22 +31,30 @@ class AttachmentModelTests(TestCase):
             email='testuser@example.com',
             password='testpassword123'
         )
-        file_path = os.path.join(settings.BASE_DIR, 'ai_assistant', 'tests', 'media', 'test_file.txt')
-        with open(file_path, 'rb') as f:
-            self.file = SimpleUploadedFile(f.name, f.read())
-        self.attachment = Attachment.objects.create(user=self.user, file=self.file)
+        self.attachment = Attachment.objects.create(
+            user=self.user,
+            file=SimpleUploadedFile("test_file.txt", b"file_content"),
+            extracted_text="Extracted text content",
+            status="completed"
+        )
 
     def test_attachment_creation(self):
         self.assertEqual(self.attachment.user, self.user)
-        self.assertTrue(self.attachment.file.name.startswith('attachments/test_file'))
-        self.assertTrue(self.attachment.file.name.endswith('.txt'))
+        self.assertTrue(self.attachment.file.name.startswith("attachments/test_file"))
+        self.assertTrue(self.attachment.file.name.endswith(".txt"))
+        self.assertEqual(self.attachment.extracted_text, "Extracted text content")
+        self.assertEqual(self.attachment.status, "completed")
         self.assertIsNotNone(self.attachment.uploaded_at)
 
+    def test_attachment_default_status(self):
+        attachment = Attachment.objects.create(
+            user=self.user,
+            file=SimpleUploadedFile("default_status_file.txt", b"file_content")
+        )
+        self.assertEqual(attachment.status, "processing")
+
     def test_attachment_str_method(self):
-        file_base_name = self.attachment.file.name.split('/')[-1].split('_')[0]  # Extract base name
-        self.assertEqual(file_base_name, 'test')
-        # Need to fix this test
-        # self.assertEqual(str(self.attachment), f"{self.user} - attachments/{file_base_name}.txt")
+        self.assertEqual(str(self.attachment), f"{self.user} - {self.attachment.file.name}")
 
 
 class SummaryModelTests(TestCase):
