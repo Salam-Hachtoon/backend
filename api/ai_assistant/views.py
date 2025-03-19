@@ -5,7 +5,7 @@ from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from .serializers import MultiFileUploadSerializer, AttachmentSerializer
-from .models import attachment
+from .models import Attachment
 
 #  Create the looger instance for the requests module
 loger = logging.getLogger('requests')
@@ -31,13 +31,14 @@ def upload_attachments(request):
 
     for file in files: # Iterate over the list of files
         # Create an attachment instance for each file
-        attachment_instance = attachment.objects.create(
+        attachment_instance = Attachment.objects.create(
             user=user,  # Associate the attachment with the authenticated user
             file=file,
             status='pending'  # Default status
         )
         attachments.append(attachment_instance)
 
+    # Serialize the list of attachment instances
     response_serializer = AttachmentSerializer(attachments, many=True)
     return Response(
         {
