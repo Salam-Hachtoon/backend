@@ -1,4 +1,4 @@
-import logging
+import logging, time
 from rest_framework import status # type: ignore
 from rest_framework.decorators import api_view, permission_classes # type: ignore
 from rest_framework.response import Response # type: ignore
@@ -59,13 +59,15 @@ def upload_attachments(request):
     files = serializer.validated_data['files']  # Get the list of validated files from the serializer
     user = request.user  # Get the authenticated user
     attachments = []
+    batch_id = str(int(time.time()))  # Create a unique batch ID (current UNIX timestamp)
 
     for file in files: # Iterate over the list of files
         # Create an attachment instance for each file
         attachment_instance = Attachment.objects.create(
             user=user,  # Associate the attachment with the authenticated user
             file=file,
-            status='pending'  # Default status
+            status='pending',  # Default status
+            batch_id=batch_id  # Assign the batch ID to the attachment
         )
         attachments.append(attachment_instance)
 
@@ -78,3 +80,32 @@ def upload_attachments(request):
         },
         status=status.HTTP_201_CREATED
     )
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_summary(request):
+    try:
+        batch_id = request.data.get('batch_id')
+    except KeyError:
+        loger.error("Batch ID not provided.")
+        return Response(
+            {
+                "message": "Batch ID not provided."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Query all attachments with the given batch_id
+    attachments = Attachment.objects.filter(batch_id=batch_id)
+
+    if not attachments.exists():
+        loger.error("No files found for batch ID: {}".format(batch_id=batch_id))
+        return Response(
+            {
+                "message": "No files found for batch ID: {}".format(batch_id)
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+    

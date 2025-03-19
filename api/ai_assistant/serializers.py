@@ -25,8 +25,8 @@ class AttachmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Attachment
-        fields = ['id', 'file', 'extracted_text', 'status', 'uploaded_at']
-        read_only_fields = ['extracted_text', 'status', 'uploaded_at']
+        fields = ['id', 'file', 'extracted_text', 'status', 'uploaded_at', 'batch_id']
+        read_only_fields = ['extracted_text', 'status', 'uploaded_at', 'batch_id']
 
 class MultiFileUploadSerializer(serializers.Serializer):
     """
