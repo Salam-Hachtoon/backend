@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer
 from .models import Attachment, Summary
 from .utility import combine_completed_files_content, call_deepseek_ai_summary, TextExtractor
+import uuid
 
 #  Create the looger instance for the requests module
 loger = logging.getLogger('requests')
@@ -61,8 +62,9 @@ def upload_attachments(request):
     user = request.user  # Get the authenticated user
     attachments = []
     batch_id = str(int(time.time()))  # Create a unique batch ID (current UNIX timestamp)
-    extractor = TextExtractor() # object
-    for file in files: # Iterate over the list of files
+    extractor = TextExtractor() # object ot extract data from files
+
+    for file in files:  # Iterate over the list of files
         # Create an attachment instance for each file
         attachment_instance = Attachment.objects.create(
             user=user,  # Associate the attachment with the authenticated user
@@ -72,12 +74,30 @@ def upload_attachments(request):
         )
         attachments.append(attachment_instance)
 
+    from django.core.cache import cache
+    # Check cache for extracted data
+    cached_data_key = f"extracted_data_{uuid.uuid4()}"
+    extracted_data = cache.get(cached_data_key)
+
+    if not extracted_data:
+        extracted_data = extractor.process_files(files)  # Process files if not in cache
+        cache.set(cached_data_key, extracted_data, timeout=3600)  # Cache the data for 1 hour
+
+    if not extracted_data['status']:
+        return Response(
+            {
+                'message': 'Error processing files.',
+                'logerror': extracted_data.get('logerror', 'No specific error provided.')
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
     # Serialize the list of attachment instances
     response_serializer = AttachmentSerializer(attachments, many=True)
     return Response(
         {
             'message': 'Files uploaded successfully.',
-            'data': response_serializer.data
+            'data': response_serializer.data,
+            'data_key': cached_data_key
         },
         status=status.HTTP_201_CREATED
     )
