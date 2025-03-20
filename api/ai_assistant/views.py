@@ -5,8 +5,8 @@ from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer
-from .models import Attachment, Summary
-from .utility import combine_completed_files_content, call_deepseek_ai_summary
+from .models import Attachment, Summary, FlashCard
+from .utility import combine_completed_files_content, call_deepseek_ai_summary, call_deepseek_ai_flashcards
 
 #  Create the looger instance for the requests module
 loger = logging.getLogger('requests')
@@ -203,4 +203,5 @@ def get_flash_cards(request):
             },
             status=status.HTTP_404_NOT_FOUND
         )
-    
+
+    deepseek_response = call_deepseek_ai_flashcards(summary.content)
