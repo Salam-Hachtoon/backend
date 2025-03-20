@@ -556,3 +556,27 @@ def get_user_quizzes(request):
         },
         status=status.HTTP_200_OK
     )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_attachments(request):
+    """
+    Retrieve all attachments associated with the authenticated user.
+    Args:
+        request (HttpRequest): The HTTP request object containing the authenticated user.
+    Returns:
+        Response: A Response object containing a success message and serialized data 
+                  of the user's attachments, with an HTTP 200 OK status.
+    """
+
+    user = request.user  # Get the authenticated user
+    attachments = Attachment.objects.filter(user=user)  # Query attachments for the user
+    serializer = AttachmentSerializer(attachments, many=True)  # Serialize the attachments
+    return Response(
+        {
+            "message": "User attachments retrieved successfully.",
+            "data": serializer.data
+        },
+        status=status.HTTP_200_OK
+    )

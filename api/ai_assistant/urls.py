@@ -12,4 +12,5 @@ urlpatterns = [
     path('user/summaries/', views.get_user_summaries, name='get_user_summaries'),
     path('user/flashcards/', views.get_user_flashcards, name='get_user_flashcards'),
     path('user/quizzes/', views.get_user_quizzes, name='get_user_quizzes'),
+    path('user/attachments/', views.get_user_attachments, name='get_user_attachments'),
 ]
