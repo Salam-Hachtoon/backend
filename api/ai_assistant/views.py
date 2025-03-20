@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer
 from .models import Attachment, Summary
-from .utility import combine_completed_files_content, call_deepseek_ai_summary
+from .utility import combine_completed_files_content, call_deepseek_ai_summary, TextExtractor
 
 #  Create the looger instance for the requests module
 loger = logging.getLogger('requests')
@@ -61,7 +61,7 @@ def upload_attachments(request):
     user = request.user  # Get the authenticated user
     attachments = []
     batch_id = str(int(time.time()))  # Create a unique batch ID (current UNIX timestamp)
-
+    extractor = TextExtractor() # object
     for file in files: # Iterate over the list of files
         # Create an attachment instance for each file
         attachment_instance = Attachment.objects.create(

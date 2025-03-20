@@ -115,6 +115,8 @@ class TextExtractor:
     """
     A utility class for extracting text from files of different formats (PDF, DOCX, and PPTX),
     and generating hash values for provided text.
+
+    make instance from the class and call
     """
 
     def extract_text(self, file_object):
