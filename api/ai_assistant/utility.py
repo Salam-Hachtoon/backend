@@ -3,6 +3,9 @@ from rest_framework.response import Response # type: ignore
 from .models import Attachment
 from django.conf import settings
 from openai import OpenAI
+from PyPDF2 import PdfReader
+from docx import Document
+from pptx import Presentation
 
 
 # Create a utility logger
@@ -249,3 +252,102 @@ def clean_json_string(json_str):
     cleaned_str = re.sub(r"```json|```", "", json_str).strip()
     
     return cleaned_str
+
+
+def check_file_type(file_name):
+    """
+    Checks the file type based on the file name extension.
+    
+    Args:
+        file_name (str): The name of the file.
+    
+    Returns:
+        str: The file type based on the extension (e.g., 'pdf', 'docx', 'txt').
+    """
+    # Extract the file extension
+    file_extension = file_name.split('.')[-1].lower()
+    
+    # Check the file type based on the extension
+    if file_extension == 'pdf':
+        return 'pdf'
+    elif file_extension == 'docx':
+        return 'docx'
+    elif file_extension == 'txt':
+        return 'txt'
+    else:
+        return 'unsupported'
+
+
+
+def extract_pdf_text(file_path):
+    """
+    Extracts text content from a PDF file.
+    Args:
+        file_path (str): The file path to the PDF document.
+    Returns:
+        str: The extracted text from the PDF, with pages joined by newline characters.
+             A separator line is appended at the end of the text.
+    """
+    try:
+        text = []
+        pdf = PdfReader(file_path)  # Read the PDF file content
+        for page in pdf.pages:
+            text.append(page.extract_text())
+        # Join the text and append the separator
+        return "\n".join(text) + "\n_________________________________\n"
+    except Exception as e:
+        # Log the error and return an empty string
+        logger.error("Failed to extract text from PDF file: {}".format(e))
+        return ""
+
+
+def extract_docx_text(file_path):
+    """
+    Extracts text content from a DOCX file.
+    Args:
+        file_path (str): The file path to the DOCX document.
+    Returns:
+        str: The extracted text from the DOCX file.
+    """
+    try:
+        # Read the DOCX file
+        doc = Document(file_path)
+
+        # Extract text from each paragraph
+        text = [paragraph.text for paragraph in doc.paragraphs]
+
+        # Join the text paragraphs
+        return "\n".join(text) + "\n_________________________________\n"
+
+    except Exception as e:
+        # Log the error and return an empty string
+        logger.error("Failed to extract text from DOCX file: {}".format(e))
+        return ""
+
+
+def extract_pptx_text(file_path):
+    """
+    Extracts text content from a PPTX file.
+    Args:
+        file_path (str): The file path to the PPTX document.
+    Returns:
+        str: The extracted text from the PPTX file.
+    """
+    try:
+        # Read the PPTX file
+        ppt = Presentation(file_path)
+
+        # Extract text from each slide
+        text = []
+        for slide in ppt.slides:
+            for shape in slide.shapes:
+                if hasattr(shape, "text"):
+                    text.append(shape.text)
+
+        # Join the text slides
+        return "\n".join(text) + "\n_________________________________\n"
+
+    except Exception as e:
+        # Log the error and return an empty string
+        logger.error("Failed to extract text from PPTX file: {}".format(e))
+        return ""
