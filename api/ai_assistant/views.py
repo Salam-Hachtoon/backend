@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes # type: ignor
 from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
-from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer, FlashCardSerializer, call_deepseek_ai_quizes
+from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer, FlashCardSerializer, call_deepseek_ai_quizes, QuizSerializer
 from .models import Attachment, Summary, FlashCard, Quiz
 from .utility import combine_completed_files_content, call_deepseek_ai_summary, call_deepseek_ai_flashcards
 
@@ -268,12 +268,13 @@ def get_flash_cards(request):
 def get_quiz(request):
     user = request.user  # Get the authenticated user
     try:
-        id = request.data.get('id')
+        summary_id = request.data.get('id')
+        difficulty_level = request.data.get('difficulty')
     except KeyError:
-        loger.error("Summary ID not provided.")
+        loger.error("Eather summary id or difficulty level not provided.")
         return Response(
             {
-                "message": "Summary ID not provided."
+                "message": "Eather summary id or difficulty level not provided."
             },
             status=status.HTTP_400_BAD_REQUEST
         )
@@ -281,7 +282,7 @@ def get_quiz(request):
     try:
         # Query all Summary with the given id
         summary = Summary.objects.get(
-            id=id,
+            id=summary_id,
             user=user
         )
     except Summary.DoesNotExist:
@@ -292,4 +293,54 @@ def get_quiz(request):
             },
             status=status.HTTP_404_NOT_FOUND
         )
-    deepseek_response = call_deepseek_ai_quizes(summary.content)
+    deepseek_response = call_deepseek_ai_quizes(summary.content, difficulty_level)
+    if deepseek_response == "Failed to generate quiz":
+        return Response(
+            {
+                "message": "Failed to generate quiz."
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+    # Extract quiz data from the DeepSeek response
+    quiz_data = deepseek_response.get("quiz", {})
+    difficulty = quiz_data.get("difficulty")
+    questions_data = quiz_data.get("questions", [])
+
+    # Create the Quiz object
+    quiz = Quiz.objects.create(
+        summary=summary,
+        difficulty=difficulty,
+        user=user
+    )
+
+    # Create questions and choices
+    created_questions = []
+    for question_data in questions_data:
+        question_text = question_data.get("question_text")
+        choices = question_data.get("choices", [])
+        correct_answer = question_data.get("correct_answer")
+
+        # Create the Question object
+        question = quiz.questions.create(
+            question_text=question_text,
+            correct_answer=correct_answer
+        )
+        created_questions.append(question)
+
+        # Create the Choice objects
+        for choice_text in choices:
+            question.choices.create(
+                choice_text=choice_text,
+                is_correct=(choice_text == correct_answer)
+            )
+
+    # Serialize the created quiz and its questions
+    serializer = QuizSerializer(quiz)
+    return Response(
+        {
+            "message": "Quiz generated and saved successfully.",
+            "data": serializer.data
+        },
+        status=status.HTTP_201_CREATED
+    )

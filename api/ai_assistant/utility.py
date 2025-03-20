@@ -179,3 +179,68 @@ def call_deepseek_ai_flashcards(summary_content):
     else:
         logger.error("Failed to generate flash cards: {}".format(response.json()))
         return "Failed to generate flash cards"
+
+
+def call_deepseek_ai_quizes(summary_content, difficulty_level):
+    Prompt = """
+    You are an AI that generates quizzes based on a given summary. The quiz should be in JSON format with the following structure:
+
+    {
+    "quiz": {
+        "difficulty": "<easy | medium | hard>",
+        "questions": [
+        {
+            "question_text": "<A well-structured quiz question>",
+            "choices": [
+            "<Choice 1>",
+            "<Choice 2>",
+            "<Choice 3>",
+            "<Choice 4>"
+            ],
+            "correct_answer": "<The correct choice from above>"
+        }
+        ]
+    }
+    }
+
+    ## Instructions:
+    1. Extract key information from the given summary.
+    2. Create **3 to 5 multiple-choice questions** based on that information.
+    3. Each question should have **4 choices**.
+    4. The `"correct_answer"` key should contain the correct choice.
+    5. Ensure the difficulty matches the requested level.
+
+    ## Difficulty Level:
+    {}
+
+    ## Expected JSON Output:
+
+    """.format(difficulty_level)
+
+    payload = {
+        "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": Prompt},
+                {"role": "user", "content": summary_content}
+            ],
+            "stream": False
+    }
+    # Send request to DeepSeek API
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {}".format(settings.DEEPSEEK_API_KEY)
+    }
+
+    response = requests.post(
+        settings.DEEPSEEK_API_URL, 
+        json=payload,
+        headers=headers
+    )
+
+    # Handle API response
+    if response.status_code == 200:
+        flash_cards = response.json().get("choices", [{}])[0].get("message", {}).get("content", "No Quizes generated")
+        return flash_cards
+    else:
+        logger.error("Failed to generate quizes: {}".format(response.json()))
+        return "Failed to generate flash quizes"
