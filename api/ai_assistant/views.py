@@ -504,3 +504,55 @@ def delete_bookmark(request, bookmark_id):
             {"message": "Bookmark with ID {} does not exist.".format(bookmark_id)},
             status=status.HTTP_404_NOT_FOUND
         )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_summaries(request):
+    """
+    Fetch all summaries created by the authenticated user.
+    """
+    user = request.user
+    summaries = Summary.objects.filter(user=user)  # Query summaries for the user
+    serializer = SummarySerializer(summaries, many=True)  # Serialize the summaries
+    return Response(
+        {
+            "message": "User summaries retrieved successfully.",
+            "data": serializer.data
+        },
+        status=status.HTTP_200_OK
+    )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_flashcards(request):
+    """
+    Fetch all flashcards created by the authenticated user.
+    """
+    user = request.user
+    flashcards = FlashCard.objects.filter(summary__user=user)  # Query flashcards for the user's summaries
+    serializer = FlashCardSerializer(flashcards, many=True)  # Serialize the flashcards
+    return Response(
+        {
+            "message": "User flashcards retrieved successfully.",
+            "data": serializer.data
+        },
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_quizzes(request):
+    """
+    Fetch all quizzes created by the authenticated user.
+    """
+    user = request.user
+    quizzes = Quiz.objects.filter(user=user)  # Query quizzes for the user
+    serializer = QuizSerializer(quizzes, many=True)  # Serialize the quizzes
+    return Response(
+        {
+            "message": "User quizzes retrieved successfully.",
+            "data": serializer.data
+        },
+        status=status.HTTP_200_OK
+    )
