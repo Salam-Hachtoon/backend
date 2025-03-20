@@ -9,7 +9,7 @@ from pptx import Presentation
 
 
 # Create a utility logger
-logger = logging.getLogger('utility_functions')
+logger = logging.getLogger('attachment')
 
 
 def combine_completed_files_content(batch_id):
