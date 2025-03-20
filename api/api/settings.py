@@ -154,6 +154,14 @@ LOGGING ={
             "backupCount": 5,  # Keep 5 old log files
             "formatter": "verbose",
         },
+        "attachment_process_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/attachment.log"),
+            "maxBytes": 5 * 1024 * 1024,  # 5MB per log file
+            "backupCount": 5,  # Keep 5 old log files
+            "formatter": "verbose",
+        },
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
@@ -199,6 +207,11 @@ LOGGING ={
         },
        'emails': {
             'handlers': ['emails_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+       'attachment': {
+            'handlers': ['attachment_process_file'],
             'level': 'ERROR',
             'propagate': False,
         },
