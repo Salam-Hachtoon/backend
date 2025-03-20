@@ -4,9 +4,9 @@ from rest_framework.decorators import api_view, permission_classes # type: ignor
 from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
-from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer, FlashCardSerializer, call_deepseek_ai_quizes, QuizSerializer
+from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer, FlashCardSerializer, QuizSerializer
 from .models import Attachment, Summary, FlashCard, Quiz
-from .utility import combine_completed_files_content, call_deepseek_ai_summary, call_deepseek_ai_flashcards
+from .utility import combine_completed_files_content, call_deepseek_ai_summary, call_deepseek_ai_flashcards, call_deepseek_ai_quizes
 
 #  Create the looger instance for the requests module
 loger = logging.getLogger('requests')
