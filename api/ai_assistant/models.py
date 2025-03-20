@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.utils.timezone import now
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 
 class Attachment(models.Model):
@@ -164,3 +166,22 @@ class Choice(models.Model):
     
     def __str__(self):
         return self.choice_text
+
+class Bookmark(models.Model):
+    """
+    Represents a bookmark created by a user for a FlashCard, Summary, or Quiz Question.
+    Attributes:
+        user (ForeignKey): The user who created the bookmark.
+        content_type (ForeignKey): The type of the bookmarked object (FlashCard, Summary, or Question).
+        object_id (PositiveIntegerField): The ID of the bookmarked object.
+        content_object (GenericForeignKey): The generic relationship to the bookmarked object.
+        created_at (DateTimeField): The timestamp when the bookmark was created.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookmarks')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "Bookmark by {} on {}".format(self.user, self.created_at)

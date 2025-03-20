@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Attachment, Summary, FlashCard, Quiz, Question, Choice
+from .models import Attachment, Summary, FlashCard, Quiz, Question, Choice, Bookmark
 
 
 class AttachmentAdmin(admin.ModelAdmin):
@@ -29,6 +29,11 @@ class ChoiceAdmin(admin.ModelAdmin):
     list_filter = ('is_correct',)
     search_fields = ('choice_text', 'question__question_text')
 
+class BookmarkAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'content_type', 'object_id', 'created_at')
+    list_filter = ('content_type', 'created_at')
+    search_fields = ('user__username',)
+
 # Register the models with custom admin classes
 admin.site.register(Attachment, AttachmentAdmin)
 admin.site.register(Summary, SummaryAdmin)
@@ -36,3 +41,4 @@ admin.site.register(FlashCard, FlashCardAdmin)
 admin.site.register(Quiz, QuizAdmin)
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(Choice, ChoiceAdmin)
+admin.site.register(Bookmark, BookmarkAdmin)
