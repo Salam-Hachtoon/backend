@@ -39,7 +39,7 @@ def process_attachment(sender, instance, created, **kwargs):
 
             # Check the file type
             file_type = check_file_type(instance.file.name)
-
+            logger.info("File type detected: {}".format(file_type))
             # Call the appropriate Celery task based on the file type
             if file_type == 'pdf':
                 extract_pdf_task.delay(instance.id)
