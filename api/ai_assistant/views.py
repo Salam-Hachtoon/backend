@@ -472,3 +472,35 @@ def create_bookmark(request):
             {"message": "{model_name.capitalize()} with ID {} does not exist.".format(object_id)},
             status=status.HTTP_404_NOT_FOUND
         )
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_bookmark(request, bookmark_id):
+    """
+    Deletes a bookmark associated with the authenticated user.
+    Args:
+        request (HttpRequest): The HTTP request object containing user information.
+        bookmark_id (int): The ID of the bookmark to be deleted.
+    Returns:
+        Response: A Response object with a success message and HTTP 200 status 
+                  if the bookmark is deleted successfully.
+                  A Response object with an error message and HTTP 404 status 
+                  if the bookmark does not exist for the user.
+    Raises:
+        None
+    """
+
+    user = request.user
+    try:
+        bookmark = Bookmark.objects.get(id=bookmark_id, user=user)
+        bookmark.delete()
+        return Response(
+            {"message": "Bookmark with ID {} deleted successfully.".format(bookmark_id)},
+            status=status.HTTP_200_OK
+        )
+    except Bookmark.DoesNotExist:
+        return Response(
+            {"message": "Bookmark with ID {} does not exist.".format(bookmark_id)},
+            status=status.HTTP_404_NOT_FOUND
+        )
