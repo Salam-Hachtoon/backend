@@ -53,7 +53,7 @@ class MultiFileUploadSerializer(serializers.Serializer):
         """
         Validate each file in the list of uploaded files.
         """
-        allowed_file_extensions = ['pdf', 'doc', 'docx', 'txt']
+        allowed_file_extensions = ['pdf', 'pptx', 'docx']
         allowed_file_size = 10 * 1024 * 1024  # 10MB
 
         for file in files:
@@ -61,7 +61,7 @@ class MultiFileUploadSerializer(serializers.Serializer):
             if file_extension not in allowed_file_extensions:
                 logger.error(f"Unsupported file extension: {file.name}. Allowed: pdf, doc, docx, txt.")
                 raise serializers.ValidationError(
-                    "Unsupported file extension for file {}. Allowed: pdf, doc, docx, txt.".format(file.name)
+                    "Unsupported file extension for file {}. Allowed: pdf, pptx, docx.".format(file.name)
                 )
 
             if file.size > allowed_file_size:
