@@ -172,3 +172,35 @@ def get_summary(request):
         },
         status=status.HTTP_201_CREATED
     )
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_flash_cards(request):
+    user = request.user  # Get the authenticated user
+    try:
+        id = request.data.get('id')
+    except KeyError:
+        loger.error("Summary ID not provided.")
+        return Response(
+            {
+                "message": "Summary ID not provided."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        # Query all Summary with the given id
+        summary = Summary.objects.get(
+            id=id,
+            user=user
+        )
+    except Summary.DoesNotExist:
+        loger.error("Summary with ID {} not found.".format(id))
+        return Response(
+            {
+                "message": "Summary with ID {} not found.".format(id)
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+    

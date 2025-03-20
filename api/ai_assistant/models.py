@@ -85,7 +85,8 @@ class FlashCard(models.Model):
     summary = models.ForeignKey(Summary, on_delete=models.CASCADE, related_name='flashcards')
     term = models.CharField(max_length=255)
     definition = models.TextField()
-    
+    created_at = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return self.term
 

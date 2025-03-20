@@ -1,6 +1,6 @@
 import os, logging
 from rest_framework import serializers # type: ignore
-from .models import Attachment, Summary
+from .models import Attachment, Summary, FlashCard
 
 
 # Create the looger instance for the attachment model
@@ -93,3 +93,21 @@ class SummarySerializer(serializers.ModelSerializer):
         model = Summary
         fields = ['id', 'user', 'attachment', 'content', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
+
+
+class FlashCardSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the FlashCard model.
+    This serializer is used to convert FlashCard model instances into JSON format
+    and validate data for creating or updating FlashCard instances.
+    Attributes:
+        Meta (class): Contains metadata for the serializer.
+            - models: Specifies the FlashCard model to be serialized.
+            - fields: Lists the fields to be included in the serialized output.
+            - read_only_fields: Specifies fields that are read-only and cannot be modified.
+    """
+
+    class Meta:
+        models = FlashCard
+        fields = ['id', 'summary', 'term', 'definition', 'created_at']
+        read_only_fields = ['id', 'summary', 'created_at']
