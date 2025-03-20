@@ -177,5 +177,5 @@ def call_deepseek_ai_flashcards(summary_content):
         flash_cards = response.json().get("choices", [{}])[0].get("message", {}).get("content", "No FlashCard generated")
         return flash_cards
     else:
-        logger.error("Failed to generate flash_cards: {}".format(response.json()))
-        return "Failed to generate flash_cards"
+        logger.error("Failed to generate flash cards: {}".format(response.json()))
+        return "Failed to generate flash cards"

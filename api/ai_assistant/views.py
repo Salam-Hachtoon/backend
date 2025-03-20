@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes # type: ignor
 from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
-from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer
+from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer, FlashCardSerializer
 from .models import Attachment, Summary, FlashCard
 from .utility import combine_completed_files_content, call_deepseek_ai_summary, call_deepseek_ai_flashcards
 
@@ -156,7 +156,7 @@ def get_summary(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    # Get the attchment
+    # Creates the new summary
     new_summary = Summary.objects.create(
         user=user,
         content=deepseek_response
@@ -178,6 +178,29 @@ def get_summary(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_flash_cards(request):
+    """
+    Generate and save flashcards for a given summary.
+    This view retrieves a summary by its ID, generates flashcards using an AI service,
+    and saves the flashcards to the database. The flashcards are then serialized and
+    returned in the response.
+    Args:
+        request (HttpRequest): The HTTP request object containing user authentication
+            and the summary ID in the request data.
+    Returns:
+        Response: A DRF Response object containing:
+            - HTTP 201: If flashcards are successfully generated and saved.
+            - HTTP 400: If the summary ID is not provided in the request data.
+            - HTTP 404: If the summary with the given ID does not exist for the user.
+            - HTTP 500: If the AI service fails to generate flashcards.
+    Raises:
+        KeyError: If the 'id' key is missing in the request data.
+    Notes:
+        - The function uses the `call_deepseek_ai_flashcards` function to generate
+          flashcards from the summary content.
+        - Flashcards are created and saved in the `FlashCard` model.
+        - The response includes serialized flashcard data using `FlashCardSerializer`.
+    """
+
     user = request.user  # Get the authenticated user
     try:
         id = request.data.get('id')
@@ -205,3 +228,36 @@ def get_flash_cards(request):
         )
 
     deepseek_response = call_deepseek_ai_flashcards(summary.content)
+    if deepseek_response == "Failed to generate flash cards":
+        return Response(
+            {
+                "message": "Failed to generate  flash cards."
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+    # Create flashcards from the DeepSeek response
+    flashcards_data = deepseek_response.get("flashcards", [])
+    created_flashcards = []
+    for flashcard in flashcards_data:
+        term = flashcard.get("term")
+        definition = flashcard.get("definition")
+
+        if term and definition:
+            # Create and save the flashcard
+            flashcard_instance = FlashCard.objects.create(
+                summary=summary,
+                term=term,
+                definition=definition
+            )
+            created_flashcards.append(flashcard_instance)
+
+    # Serialize the created flashcards
+    serializer = FlashCardSerializer(created_flashcards, many=True)
+    return Response(
+        {
+            "message": "Flashcards generated and saved successfully.",
+            "data": serializer.data
+        },
+        status=status.HTTP_201_CREATED
+    )
