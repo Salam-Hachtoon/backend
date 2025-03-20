@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view, permission_classes # type: ignor
 from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
-from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer, FlashCardSerializer
-from .models import Attachment, Summary, FlashCard
+from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer, FlashCardSerializer, call_deepseek_ai_quizes
+from .models import Attachment, Summary, FlashCard, Quiz
 from .utility import combine_completed_files_content, call_deepseek_ai_summary, call_deepseek_ai_flashcards
 
 #  Create the looger instance for the requests module
@@ -261,3 +261,35 @@ def get_flash_cards(request):
         },
         status=status.HTTP_201_CREATED
     )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_quiz(request):
+    user = request.user  # Get the authenticated user
+    try:
+        id = request.data.get('id')
+    except KeyError:
+        loger.error("Summary ID not provided.")
+        return Response(
+            {
+                "message": "Summary ID not provided."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        # Query all Summary with the given id
+        summary = Summary.objects.get(
+            id=id,
+            user=user
+        )
+    except Summary.DoesNotExist:
+        loger.error("Summary with ID {} not found.".format(id))
+        return Response(
+            {
+                "message": "Summary with ID {} not found.".format(id)
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+    deepseek_response = call_deepseek_ai_quizes(summary.content)
