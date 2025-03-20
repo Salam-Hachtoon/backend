@@ -4,8 +4,9 @@ from rest_framework.decorators import api_view, permission_classes # type: ignor
 from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
+from django.contrib.contenttypes.models import ContentType
 from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer, FlashCardSerializer, QuizSerializer
-from .models import Attachment, Summary, FlashCard, Quiz
+from .models import Attachment, Summary, FlashCard, Quiz, Bookmark
 from .utility import combine_completed_files_content, call_deepseek_ai_summary, call_deepseek_ai_flashcards, call_deepseek_ai_quizes, clean_json_string
 
 #  Create the looger instance for the requests module
@@ -401,3 +402,73 @@ def get_quiz(request):
     )
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_bookmark(request):
+    """
+    Handles the creation of a bookmark for a specific object and model.
+    This function allows a user to bookmark an object of a specified model. 
+    It checks if the required parameters are provided, validates the model 
+    and object existence, and creates or retrieves the bookmark.
+    Args:
+        request (HttpRequest): The HTTP request object containing the user, 
+                               and the 'object_id' and 'model_name' in the request data.
+    Returns:
+        Response: A DRF Response object with a success or error message and 
+                  the appropriate HTTP status code.
+    Responses:
+        - 201 Created: If the bookmark is successfully created.
+        - 200 OK: If the bookmark already exists.
+        - 400 Bad Request: If required parameters are missing or the model name is invalid.
+        - 404 Not Found: If the specified object does not exist.
+    Raises:
+        ContentType.DoesNotExist: If the specified model name does not correspond to a valid ContentType.
+        model_class.DoesNotExist: If the object with the given ID does not exist in the specified model.
+    """
+
+    user = request.user
+    object_id = request.data.get('object_id')
+    model_name = request.data.get('model_name')  # e.g., 'summary', 'flashcard', 'question'
+
+    if not object_id or not model_name:
+        return Response(
+            {"message": "Both 'object_id' and 'model_name' are required."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        # Get the ContentType for the specified model
+        content_type = ContentType.objects.get(model=model_name.lower())
+
+        # Check if the object exists
+        model_class = content_type.model_class()
+        obj = model_class.objects.get(id=object_id)
+
+        # Create the bookmark
+        bookmark, created = Bookmark.objects.get_or_create(
+            user=user,
+            content_type=content_type,
+            object_id=obj.id
+        )
+
+        if created:
+            return Response(
+                {"message": "Bookmark created successfully for {} with ID {}.".format(model_name, object_id)},
+                status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(
+                {"message": "Bookmark already exists for {} with ID {}.".format(model_name, object_id)},
+                status=status.HTTP_200_OK
+            )
+
+    except ContentType.DoesNotExist:
+        return Response(
+            {"message": "Invalid model name: {}.".format(model_name)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except model_class.DoesNotExist:
+        return Response(
+            {"message": "{model_name.capitalize()} with ID {} does not exist.".format(object_id)},
+            status=status.HTTP_404_NOT_FOUND
+        )
