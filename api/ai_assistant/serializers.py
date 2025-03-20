@@ -1,6 +1,6 @@
 import os, logging
 from rest_framework import serializers # type: ignore
-from .models import Attachment, Summary, FlashCard
+from .models import Attachment, Summary, FlashCard, Question, Quiz, Choice
 
 
 # Create the looger instance for the attachment model
@@ -111,3 +111,64 @@ class FlashCardSerializer(serializers.ModelSerializer):
         models = FlashCard
         fields = ['id', 'summary', 'term', 'definition', 'created_at']
         read_only_fields = ['id', 'summary', 'created_at']
+
+
+class ChoiceSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Choice model.
+    This serializer is used to convert Choice model instances into JSON format
+    and validate incoming data for creating or updating Choice instances.
+    Fields:
+    - id: The unique identifier for the choice.
+    - choice_text: The text of the choice.
+    - is_correct: A boolean indicating whether the choice is correct.
+    """
+
+    class Meta:
+        model = Choice
+        fields = ['id', 'choice_text', 'is_correct']
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Question model.
+    This serializer is used to convert Question model instances into JSON format
+    and vice versa. It includes the following fields:
+    - `id`: The unique identifier for the question.
+    - `question_text`: The text of the question.
+    - `correct_answer`: The correct answer to the question.
+    - `choices`: A nested serializer for the related Choice objects, which are
+        read-only and allow multiple choices to be represented.
+    Attributes:
+            choices (ChoiceSerializer): A nested serializer for the related choices.
+    """
+
+    choices = ChoiceSerializer(many=True, read_only=True)  # Nested serializer for choices
+
+    class Meta:
+        model = Question
+        fields = ['id', 'question_text', 'correct_answer', 'choices']
+
+
+class QuizSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Quiz model.
+    This serializer is used to convert Quiz model instances into JSON format and vice versa.
+    It includes a nested serializer for the related questions.
+    Attributes:
+        questions (QuestionSerializer): A nested serializer for the related questions, 
+            set to read-only and allows multiple questions.
+    Meta:
+        model (Quiz): The model that this serializer is based on.
+        fields (list): Specifies the fields to include in the serialized output. 
+            Includes 'id', 'user', 'summary', 'difficulty', 'created_at', and 'questions'.
+        read_only_fields (list): Specifies the fields that are read-only. 
+            Includes 'id', 'user', 'created_at', and 'questions'.
+    """
+
+    questions = QuestionSerializer(many=True, read_only=True)  # Nested serializer for questions
+
+    class Meta:
+        model = Quiz
+        fields = ['id', 'user', 'summary', 'difficulty', 'created_at', 'questions']
+        read_only_fields = ['id', 'user', 'created_at', 'questions']
