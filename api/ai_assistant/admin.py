@@ -3,12 +3,12 @@ from .models import Attachment, Summary, FlashCard, Quiz, Question, Choice
 
 
 class AttachmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'file', 'status', 'uploaded_at')
+    list_display = ('id', 'user', 'file', 'status', 'uploaded_at', 'extracted_text', 'batch_id')
     list_filter = ('status', 'uploaded_at')
     search_fields = ('user__username', 'file')
 
 class SummaryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'created_at')
+    list_display = ('id', 'user', 'created_at', 'content')
     search_fields = ('user__username', 'content')
 
 class FlashCardAdmin(admin.ModelAdmin):

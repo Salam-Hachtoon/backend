@@ -2,6 +2,7 @@ import logging, requests
 from rest_framework.response import Response # type: ignore
 from .models import Attachment
 from django.conf import settings
+from openai import OpenAI
 
 
 # Create a utility logger
@@ -38,68 +39,64 @@ def combine_completed_files_content(batch_id):
             pass
         combined_text += attchemnt.extracted_text + "\n"
 
-    return 
+    return combined_text
 
 
 
 def call_deepseek_ai_summary(combined_text):
     """"
-    Sends a request to the DeepSeek AI API to generate a structured and concise summary 
-    of the provided  text based on predefined guidelines.
+    Generates a structured and well-organized summary of the provided text using the DeepSeek AI API.
+    The function sends the input text to the DeepSeek AI API with specific summarization guidelines 
+    and retrieves a concise summary in a predefined format.
     Args:
         combined_text (str): The input text to be summarized.
     Returns:
-        str: The generated summary if the API call is successful.
-        str: An error text with the status code if the API call fails.
+        str: The generated summary if successful, or an error message if the operation fails.
     Raises:
-        Exception: Logs an error message if the API response status code is not 200.
-    Notes:
-        - The summary follows a specific format with a title, subtitle, and a single 
-          paragraph containing key details.
-        - The API key and URL are retrieved from the Django settings.
+        Exception: Logs and handles any exceptions that occur during the API call.
+    Example Output Format:
+        "The summary of the input text."
     """
     # Crate the payload for the DeepSeek AI API
-    Prompt = """You are an advanced AI assistant specialized in text summarization. Your task is to generate a structured and well-organized summary of the user provided text.  
-            ### Guidelines:
-            1. Begin with a **clear and relevant title** for the summary.  
-            2. Follow it with a **short subtitle** that provides additional context.  
-            3. Present the summary as a **single, well-structured paragraph** with all key details.  
-            4. Ensure clarity, conciseness, and readability while retaining essential information.  
-            5. Avoid unnecessary details and redundant words.  
+    Prompt = """
+    You are an advanced AI assistant specialized in text summarization. Your task is to generate a structured and well-organized summary of the user-provided text in **JSON format**.  
 
-            ### **Output Format Example:**  
-            [Title of the Summary]  
-            [Short Subtitle]  
-            [Summary paragraph with key details in a concise manner]  
+    ### **Guidelines:**
+    1. Begin with a **clear and relevant title** for the summary.  
+    2. Follow it with a **short subtitle** that provides additional context.  
+    3. Present the summary as a **single, well-structured paragraph** with all key details.  
+    4. Ensure clarity, conciseness, and readability while retaining essential information.  
+    5. Avoid unnecessary details and redundant words.  
+
+    ### **Expected JSON Output Format:**
+    {
+    "summary": {
+        "content": "<Summary paragraph with key details in a concise manner>"
+    }
+    }
     """
-    payload = {
-        "model": "deepseek-chat",
-            "messages": [
+    try:
+        # Initialize the OpenAI client with the DeepSeek API key and base URL
+        client = OpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+
+        # Call the DeepSeek API to generate a summary
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
                 {"role": "system", "content": Prompt},
-                {"role": "user", "content": combined_text}
+                {"role": "user", "content": combined_text},
             ],
-            "stream": False
-    }
-    # Send request to DeepSeek API
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer {}".format(settings.DEEPSEEK_API_KEY)
-    }
+            stream=False
+        )
 
-    response = requests.post(
-        settings.DEEPSEEK_API_URL, 
-        json=payload,
-        headers=headers
-    )
-
-    # Handle API response
-    if response.status_code == 200:
-        summary = response.json().get("choices", [{}])[0].get("message", {}).get("content", "No summary generated")
+        # Extract the summary from the response
+        summary = response.choices[0].message.content
         return summary
-    else:
-        logger.error("Failed to generate summary: {}".format(response.json()))
-        return "Failed to generate summary"
 
+    except Exception as e:
+        # Log the error and return a failure message
+        logger.error("Failed to generate summary: {}".format(e))
+        return "Failed to generate summary"
 
 def call_deepseek_ai_flashcards(summary_content):
     """
