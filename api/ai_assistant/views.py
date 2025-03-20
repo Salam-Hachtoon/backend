@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from .serializers import MultiFileUploadSerializer, AttachmentSerializer, SummarySerializer, FlashCardSerializer, QuizSerializer
 from .models import Attachment, Summary, FlashCard, Quiz
-from .utility import combine_completed_files_content, call_deepseek_ai_summary, call_deepseek_ai_flashcards, call_deepseek_ai_quizes
+from .utility import combine_completed_files_content, call_deepseek_ai_summary, call_deepseek_ai_flashcards, call_deepseek_ai_quizes, clean_json_string
 
 #  Create the looger instance for the requests module
 loger = logging.getLogger('requests')
@@ -236,9 +236,10 @@ def get_flash_cards(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+    cleaned_json_string = clean_json_string(deepseek_response)
     # Create flashcards from the DeepSeek response
     try:
-        flashcards_data = json.loads(deepseek_response)
+        flashcards_data = json.loads(cleaned_json_string).get("flashcards", [])
     except json.JSONDecodeError:
         loger.error("Failed to parse flashcards data.")
         return Response(
@@ -277,6 +278,36 @@ def get_flash_cards(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_quiz(request):
+    """
+    Handles the generation of a quiz based on a summary's content and difficulty level.
+    This view function retrieves a summary associated with the authenticated user,
+    generates a quiz using an external AI service, and saves the quiz along with its
+    questions and choices to the database.
+    Args:
+        request (HttpRequest): The HTTP request object containing user authentication
+                               and request data.
+    Returns:
+        Response: A DRF Response object containing the status and data of the operation.
+                  - 201 Created: If the quiz is successfully generated and saved.
+                  - 400 Bad Request: If required data (summary ID or difficulty level) is missing.
+                  - 404 Not Found: If the specified summary does not exist.
+                  - 500 Internal Server Error: If quiz generation or data parsing fails.
+    Raises:
+        KeyError: If 'id' or 'difficulty' keys are missing in the request data.
+        Summary.DoesNotExist: If the summary with the given ID does not exist for the user.
+    Workflow:
+        1. Extracts 'id' and 'difficulty' from the request data.
+        2. Retrieves the summary associated with the authenticated user.
+        3. Calls an external AI service to generate a quiz based on the summary content.
+        4. Parses and validates the AI response.
+        5. Saves the quiz, questions, and choices to the database.
+        6. Returns a serialized response of the created quiz.
+    Notes:
+        - The external AI service is invoked via the `call_deepseek_ai_quizes` function.
+        - The AI response is cleaned using the `clean_json_string` function.
+        - The quiz, questions, and choices are saved using Django ORM models.
+    """
+
     user = request.user  # Get the authenticated user
     try:
         summary_id = request.data.get('id')
@@ -314,9 +345,22 @@ def get_quiz(request):
         )
 
     # Extract quiz data from the DeepSeek response
-    quiz_data = deepseek_response.get("quiz", {})
-    difficulty = quiz_data.get("difficulty")
-    questions_data = quiz_data.get("questions", [])
+    cleaned_json_string = clean_json_string(deepseek_response)
+    # Create flashcards from the DeepSeek response
+    try:
+        quiz_clean_data = json.loads(cleaned_json_string)
+    except json.JSONDecodeError:
+        loger.error("Failed to parse quiz data.")
+        return Response(
+            {
+                "message": "Failed to parse quiz data."
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    # Save the quiz, questions, and choices to the database
+    quiz_info = quiz_clean_data.get("quiz", {})
+    difficulty = quiz_info.get("difficulty")
+    questions_data = quiz_info.get("questions", [])
 
     # Create the Quiz object
     quiz = Quiz.objects.create(
@@ -355,3 +399,4 @@ def get_quiz(request):
         },
         status=status.HTTP_201_CREATED
     )
+

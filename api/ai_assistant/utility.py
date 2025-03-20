@@ -1,4 +1,4 @@
-import logging, requests
+import logging, requests, re
 from rest_framework.response import Response # type: ignore
 from .models import Attachment
 from django.conf import settings
@@ -132,21 +132,20 @@ def call_deepseek_ai_flashcards(summary_content):
     provided by the user
 
     ### **Output Format Example:**  
+    Return a JSON object structured as follows and remove the markdown symbols from the output:
+
+    ```json
     {
-    "flashcards": [
-        {
-        "term": "Photosynthesis",
-        "definition": "A process used by plants and other organisms to convert light energy into chemical energy."
-        },
-        {
-        "term": "Chlorophyll",
-        "definition": "A green pigment in plants that absorbs light energy for photosynthesis."
-        },
-        {
-        "term": "Carbon Dioxide",
-        "definition": "A colorless gas (CO2) absorbed by plants during photosynthesis and released during respiration."
-        }
-    ]
+        "flashcards": [
+            {
+                "term": "Example Term",
+                "definition": "A brief explanation of the term."
+            },
+            {
+                "term": "Another Term",
+                "definition": "Another brief explanation."
+            }
+        ]
     }
     """
     try:
@@ -175,65 +174,78 @@ def call_deepseek_ai_flashcards(summary_content):
 
 
 def call_deepseek_ai_quizes(summary_content, difficulty_level):
-    Prompt = """
+    Prompt = f"""
     You are an AI that generates quizzes based on a given summary. The quiz should be in JSON format with the following structure:
 
-    {
-    "quiz": {
-        "difficulty": "<easy | medium | hard>",
-        "questions": [
-        {
-            "question_text": "<A well-structured quiz question>",
-            "choices": [
-            "<Choice 1>",
-            "<Choice 2>",
-            "<Choice 3>",
-            "<Choice 4>"
-            ],
-            "correct_answer": "<The correct choice from above>"
-        }
-        ]
-    }
-    }
+```json
+    {{
+        "quiz": {{
+            "difficulty": "<easy | medium | hard>",
+            "questions": [
+            {{
+                "question_text": "<A well-structured quiz question>",
+                "choices": [
+                "<Choice 1>",
+                "<Choice 2>",
+                "<Choice 3>",
+                "<Choice 4>"
+                ],
+                "correct_answer": "<The correct choice from above>"
+            }}
+            ]
+        }}
+    }}
+    ```
 
-    ## Instructions:
-    1. Extract key information from the given summary.
-    2. Create **3 to 5 multiple-choice questions** based on that information.
-    3. Each question should have **4 choices**.
+    Instructions:
+    1. Extract key information** from the provided summary.
+    2. Create at lest 3 and up to 20 based on the  given summary ltiple-choice questions based on that information.
+    3. Each question should have 4 choices.
     4. The `"correct_answer"` key should contain the correct choice.
     5. Ensure the difficulty matches the requested level.
 
-    ## Difficulty Level:
-    {}
+    Difficulty Level:
+    - {difficulty_level}  
 
-    ## Expected JSON Output:
+    ### **Expected JSON Output:**
+    - The output should follow the quiz structure provided above, with `"difficulty"`, `"questions"`, and `"choices"`.
+    - Make sure each question has exactly 4 answer choices and a correct answer.
+    """
+    try:
+        # Initialize the OpenAI client with the DeepSeek API key and base URL
+        client = OpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
-    """.format(difficulty_level)
-
-    payload = {
-        "model": "deepseek-chat",
-            "messages": [
+        # Call the DeepSeek API to generate a summary
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
                 {"role": "system", "content": Prompt},
-                {"role": "user", "content": summary_content}
+                {"role": "user", "content": summary_content},
             ],
-            "stream": False
-    }
-    # Send request to DeepSeek API
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer {}".format(settings.DEEPSEEK_API_KEY)
-    }
+            stream=False
+        )
+        # Extract the summary from the response
+        logger.info(response.choices[0].message.content)
+        quiz = response.choices[0].message.content
+        return quiz
 
-    response = requests.post(
-        settings.DEEPSEEK_API_URL, 
-        json=payload,
-        headers=headers
-    )
+    except Exception as e:
+        # Log the error and return a failure message
+        logger.error("Failed to generate flash cards: {}".format(e))
+        return "Failed to generate flash cards"
 
-    # Handle API response
-    if response.status_code == 200:
-        flash_cards = response.json().get("choices", [{}])[0].get("message", {}).get("content", "No Quizes generated")
-        return flash_cards
-    else:
-        logger.error("Failed to generate quizes: {}".format(response.json()))
-        return "Failed to generate flash quizes"
+
+def clean_json_string(json_str):
+    """
+    Removes markdown-style JSON code block indicators (```json ... ```) if present.
+    
+    Args:
+        json_str (str): The raw JSON string (possibly containing markdown).
+    
+    Returns:
+        str: The cleaned JSON string.
+    """
+    # Remove markdown-style JSON code block
+    cleaned_str = re.sub(r"```json|```", "", json_str).strip()
+    
+    return cleaned_str

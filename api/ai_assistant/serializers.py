@@ -108,7 +108,7 @@ class FlashCardSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        models = FlashCard
+        model = FlashCard
         fields = ['id', 'summary', 'term', 'definition', 'created_at']
         read_only_fields = ['id', 'summary', 'created_at']
 
