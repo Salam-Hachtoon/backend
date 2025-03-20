@@ -98,6 +98,7 @@ def call_deepseek_ai_summary(combined_text):
         logger.error("Failed to generate summary: {}".format(e))
         return "Failed to generate summary"
 
+
 def call_deepseek_ai_flashcards(summary_content):
     """
     Generates a structured set of flashcards in JSON format by analyzing the provided summary content.
@@ -131,7 +132,6 @@ def call_deepseek_ai_flashcards(summary_content):
     provided by the user
 
     ### **Output Format Example:**  
-    ```json
     {
     "flashcards": [
         {
@@ -149,32 +149,28 @@ def call_deepseek_ai_flashcards(summary_content):
     ]
     }
     """
-    payload = {
-        "model": "deepseek-chat",
-            "messages": [
+    try:
+        # Initialize the OpenAI client with the DeepSeek API key and base URL
+        client = OpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+
+        # Call the DeepSeek API to generate a summary
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
                 {"role": "system", "content": Prompt},
-                {"role": "user", "content": summary_content}
+                {"role": "user", "content": summary_content},
             ],
-            "stream": False
-    }
-    # Send request to DeepSeek API
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer {}".format(settings.DEEPSEEK_API_KEY)
-    }
-
-    response = requests.post(
-        settings.DEEPSEEK_API_URL, 
-        json=payload,
-        headers=headers
-    )
-
-    # Handle API response
-    if response.status_code == 200:
-        flash_cards = response.json().get("choices", [{}])[0].get("message", {}).get("content", "No FlashCard generated")
+            stream=False
+        )
+        logger.info(response)
+        # Extract the summary from the response
+        flash_cards = response.choices[0].message.content
+        logger.info(flash_cards)
         return flash_cards
-    else:
-        logger.error("Failed to generate flash cards: {}".format(response.json()))
+
+    except Exception as e:
+        # Log the error and return a failure message
+        logger.error("Failed to generate flash cards: {}".format(e))
         return "Failed to generate flash cards"
 
 

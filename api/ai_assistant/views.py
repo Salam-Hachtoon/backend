@@ -1,4 +1,4 @@
-import logging, time
+import logging, time, json
 from rest_framework import status # type: ignore
 from rest_framework.decorators import api_view, permission_classes # type: ignore
 from rest_framework.response import Response # type: ignore
@@ -237,7 +237,18 @@ def get_flash_cards(request):
         )
 
     # Create flashcards from the DeepSeek response
-    flashcards_data = deepseek_response.get("flashcards", [])
+    try:
+        flashcards_data = json.loads(deepseek_response)
+    except json.JSONDecodeError:
+        loger.error("Failed to parse flashcards data.")
+        return Response(
+            {
+                "message": "Failed to parse flashcards data."
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
     created_flashcards = []
     for flashcard in flashcards_data:
         term = flashcard.get("term")

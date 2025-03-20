@@ -77,7 +77,7 @@ REST_FRAMEWORK = {
 
 # JWT Settings for the access and refresh tokens
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Set the access token expiration to 15 minutes
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),  # Set the access token expiration to 15 minutes
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Set the refresh token expiration to 7 days
     'ROTATE_REFRESH_TOKENS': True,                   # Whether to rotate refresh tokens
     'BLACKLIST_AFTER_ROTATION': True,                # If True, blacklists the old refresh token when a new one is issued
