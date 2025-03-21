@@ -38,8 +38,7 @@ def send_email_with_attachments(subject, template_name, context, recipient_list,
         template_name (str): The base name of the email templates (without extension).
         context (dict): A dictionary containing context variables to render the templates.
         recipient_list (list): A list of recipient email addresses.
-        attachments (list, optional): A list of file paths to attach to the email. Defaults to None.
-    Returns:
+        attachments (list, optional): A list of file paths 
         str: A success message if the email is sent successfully, otherwise an error message.
     """
     # The html and the txt file should have the same name

@@ -7,6 +7,12 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from ..models import User
 
+from django.test import TestCase
+from unittest.mock import patch
+from django.urls import reverse
+from ..Google_OAuth_API import exchange_code_for_token, exchange_token_for_user_info
+
+
 User = get_user_model()
 
 class UserSignupTests(APITestCase):
@@ -407,6 +413,9 @@ class VerifyOtpTests(APITestCase):
             'email': 'nonexistent@example.com',
             'otp_code': '123456'
         }
+        """
+        un tested 
+        """
     # Need to check the emails output
     # def test_verify_otp_success(self):
     #     self.user.generate_otp = lambda: '123456'  # Mock the OTP generation
@@ -433,4 +442,50 @@ class VerifyOtpTests(APITestCase):
     #     response = self.client.post(self.verify_otp_url, self.non_existent_user_data, format='json')
     #     self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     #     self.assertEqual(response.data['message'], 'User not found.')
+
+
+
+class GoogleOAuthTests(TestCase):
+    def setUp(self):
+        self.auth_code = "test_auth_code"
+        self.access_token = "test_access_token"
+        self.user_info = {
+            "email": "testuser@gmail.com",
+            "given_name": "Test",
+            "family_name": "User",
+            "profile_picture": "https://example.com/profile.jpg"
+        }
+        self.token_response = {
+            "access_token": self.access_token,
+            "expires_in": 3600,
+            "token_type": "Bearer"
+        }
+
+    @patch("requests.post")
+    def test_exchange_code_for_token(self, mock_post):
+        """Test exchanging authorization code for an access token."""
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = self.token_response
+
+        token = exchange_code_for_token(self.auth_code)
+        self.assertEqual(token, self.token_response)
+
+    @patch("requests.get")
+    def test_exchange_token_for_user_info(self, mock_get):
+        """Test fetching user info using an access token."""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = self.user_info
+
+        user_info = exchange_token_for_user_info(self.access_token)
+        self.assertEqual(user_info, {
+            "email": "testuser@gmail.com",
+            "given_name": "Test",
+            "family_name": "User",
+            "profile_picture": "https://example.com/profile.jpg"
+        })
+
+
+
+
+
 
