@@ -7,7 +7,7 @@ from rest_framework import status # type: ignore
 from rest_framework.decorators import api_view, permission_classes # type: ignore
 from django.conf import settings
 from django.shortcuts import redirect
-from ..users.serializers import UserSerializer
+from .serializers import UserSerializer
 from .utility import generate_jwt_tokens
 
 # Create the looger instance for the celery tasks
@@ -17,7 +17,7 @@ loger = logging.getLogger('requests')
 User = get_user_model()
 
 
-
+@permission_classes([AllowAny])
 def google_login(request):
     """
     Redirect user to Google's OAuth 2.0 authentication page.
