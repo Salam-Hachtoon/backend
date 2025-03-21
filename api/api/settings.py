@@ -63,17 +63,55 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'django_celery_beat',
+    'django.contrib.sites',  # Required for allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'dj_rest_auth',  # Provides login/logout views
+    'dj_rest_auth.registration',  # Registration views
 ]
 
 # Rest Framework Settings using JWT for authentication
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ]
 }
+
+# Set the authentication backends to use allauth
+# Allauth settings for the authentication
+# https://django-allauth.readthedocs.io/en/latest/configuration.html
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',  # Enables allauth
+)
+# Set the allauth settings
+SITE_ID = 1
+
+# Google OAuth2 settings for the social login
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    }
+}
+
+# Automatic signup after Google login
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+# 
+SOCIALACCOUNT_PROVIDERS['google']['APP'] = {
+    'client_id': env("GOOGLE_CLIENT_ID"),
+    'secret': env("GOOGLE_CLIENT_SECRET"),
+    'key': '',
+    
+}
+
 
 # JWT Settings for the access and refresh tokens
 SIMPLE_JWT = {
