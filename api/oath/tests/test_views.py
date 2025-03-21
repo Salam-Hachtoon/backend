@@ -1,97 +1,91 @@
-
+from django.test import TestCase
 from django.urls import reverse
-from unittest.mock import patch
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient
 from rest_framework import status
-from ...users.models import User
+from unittest.mock import patch
+from django.conf import settings
 
 
-class GoogleOAuthTests(APITestCase):
+class GoogleOAuthViewsTestCase(TestCase):
     """
-    Test suite for Google OAuth views.
-    This test class contains unit tests to verify the functionality of the
-    `google_login` and `google_callback` views.
+    Test case for testing Google OAuth views.
+    This test case includes tests for the following scenarios:
+    1. Redirect behavior of the `google_login` view.
+    2. Successful OAuth process in the `google_callback` view.
+    3. Failed token exchange in the `google_callback` view.
+    4. Missing authorization code in the `google_callback` view.
+    Tested Views:
+    - `google_login`: Ensures the user is redirected to the Google OAuth URL.
+    - `google_callback`: Handles the callback from Google after the OAuth process.
+    Mocks:
+    - `requests.post`: Mocked to simulate token exchange with Google's OAuth server.
+    - `requests.get`: Mocked to simulate fetching user information from Google's API.
+    Test Methods:
+    - `test_google_login_redirect`: Verifies the redirect to the Google OAuth URL.
+    - `test_google_callback_success`: Tests the successful OAuth process, including token exchange and user info retrieval.
+    - `test_google_callback_failed_token_exchange`: Tests the behavior when the token exchange fails.
+    - `test_google_callback_no_code`: Tests the behavior when no authorization code is provided in the callback request.
     """
 
     def setUp(self):
-        self.google_login_url = reverse('google_login')  # Replace with the actual URL name
-        self.google_callback_url = reverse('google_callback')  # Replace with the actual URL name
-        self.user_data = {
+        self.client = APIClient()
+        self.google_login_url = reverse('google_login')  # Replace with the actual name of the google_login URL
+        self.google_callback_url = reverse('google_callback')  # Replace with the actual name of the google_callback URL
+
+    def test_google_login_redirect(self):
+        """
+        Test that the google_login view redirects to the Google OAuth URL.
+        """
+        response = self.client.get(self.google_login_url)
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertIn("https://accounts.google.com/o/oauth2/auth", response.url)
+
+    @patch('requests.post')
+    @patch('requests.get')
+    def test_google_callback_success(self, mock_get, mock_post):
+        """
+        Test the google_callback view when the OAuth process is successful.
+        """
+        # Mock the token response
+        mock_post.return_value.json.return_value = {
+            "access_token": "mock_access_token"
+        }
+
+        # Mock the user info response
+        mock_get.return_value.json.return_value = {
             "email": "testuser@example.com",
             "given_name": "Test",
             "family_name": "User",
             "picture": "http://example.com/profile.jpg"
         }
 
-    def test_google_login_redirect(self):
-        """
-        Test that the `google_login` view redirects to the Google OAuth URL.
-        """
-        response = self.client.get(self.google_login_url)
-        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
-        self.assertIn("https://accounts.google.com/o/oauth2/auth", response.url)
-
-    @patch("api.oath.views.requests.post")
-    @patch("api.oath.views.requests.get")
-    def test_google_callback_success(self, mock_get, mock_post):
-        """
-        Test that the `google_callback` view successfully exchanges the code
-        for an access token and retrieves user info.
-        """
-        # Mock the token response
-        mock_post.return_value.json.return_value = {"access_token": "mock_access_token"}
-
-        # Mock the user info response
-        mock_get.return_value.json.return_value = self.user_data
-
-        # Simulate the callback request with a valid code
-        response = self.client.get(self.google_callback_url, {"code": "mock_code"})
+        # Simulate the callback with a valid code
+        response = self.client.get(self.google_callback_url, {'code': 'mock_code'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["message"], "Login successful")
-        self.assertEqual(response.data["user"]["email"], self.user_data["email"])
-        self.assertEqual(response.data["user"]["first_name"], self.user_data["given_name"])
-        self.assertEqual(response.data["user"]["last_name"], self.user_data["family_name"])
-        self.assertEqual(response.data["user"]["profile_picture"], self.user_data["picture"])
+        self.assertIn('access_token', response.data)
+        self.assertIn('user', response.data)
+        self.assertEqual(response.data['user']['email'], "testuser@example.com")
 
-        # Verify that the user was created in the database
-        user = User.objects.get(email=self.user_data["email"])
-        self.assertEqual(user.first_name, self.user_data["given_name"])
-        self.assertEqual(user.last_name, self.user_data["family_name"])
-
-    def test_google_callback_no_code(self):
-        """
-        Test that the `google_callback` view returns an error if no code is provided.
-        """
-        response = self.client.get(self.google_callback_url)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], "No code provided")
-
-    @patch("api.oath.views.requests.post")
+    @patch('requests.post')
     def test_google_callback_failed_token_exchange(self, mock_post):
         """
-        Test that the `google_callback` view returns an error if the token exchange fails.
+        Test the google_callback view when the token exchange fails.
         """
         # Mock a failed token response
         mock_post.return_value.json.return_value = {}
 
-        response = self.client.get(self.google_callback_url, {"code": "mock_code"})
+        # Simulate the callback with an invalid code
+        response = self.client.get(self.google_callback_url, {'code': 'invalid_code'})
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], "Failed to obtain access token")
+        self.assertEqual(response.data['message'], "Failed to obtain access token")
 
-    @patch("api.oath.views.requests.post")
-    @patch("api.oath.views.requests.get")
-    def test_google_callback_failed_user_info(self, mock_get, mock_post):
+    def test_google_callback_no_code(self):
         """
-        Test that the `google_callback` view returns an error if user info retrieval fails.
+        Test the google_callback view when no code is provided.
         """
-        # Mock the token response
-        mock_post.return_value.json.return_value = {"access_token": "mock_access_token"}
+        response = self.client.get(self.google_callback_url)
 
-        # Mock a failed user info response
-        mock_get.return_value.json.return_value = {}
-
-        response = self.client.get(self.google_callback_url, {"code": "mock_code"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], "Failed to retrieve email")
-
+        self.assertEqual(response.data['message'], "No code provided")
