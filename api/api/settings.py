@@ -47,6 +47,10 @@ EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT')
 # Retrieve the DEEPSEEK_API_KEY from the environment
 DEEPSEEK_API_KEY = env('DEEPSEEK_API_KEY')
 DEEPSEEK_API_URL = env('DEEPSEEK_API_URL')
+# Retrieve google credentials
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
+
 
 # Application definition
 
@@ -58,6 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users.apps.UsersConfig',
+    'oath.apps.OathConfig',
     'ai_assistant.apps.AiAssistantConfig',
     'rest_framework',
     'rest_framework_simplejwt',
