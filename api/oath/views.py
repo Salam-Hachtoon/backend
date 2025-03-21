@@ -138,7 +138,7 @@ def google_callback(request):
 
     # Update user profile picture
     if created:
-        user.profile.picture = profile_picture  # Assuming a user profile exists
+        user.profile_picture = profile_picture  # Assuming a user profile exists
 
     user.save()
 

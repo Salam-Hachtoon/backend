@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.test import APIClient
-from rest_framework import status
+from rest_framework.test import APIClient # type: ignore
+from rest_framework import status # type: ignore
 from unittest.mock import patch
 from django.conf import settings
 
@@ -29,8 +29,8 @@ class GoogleOAuthViewsTestCase(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.google_login_url = reverse('google_login')  # Replace with the actual name of the google_login URL
-        self.google_callback_url = reverse('google_callback')  # Replace with the actual name of the google_callback URL
+        self.google_login_url = reverse('google-login')  # Replace with the actual name of the google_login URL
+        self.google_callback_url = reverse('google-callback')  # Replace with the actual name of the google_callback URL
 
     def test_google_login_redirect(self):
         """
