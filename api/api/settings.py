@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users.apps.UsersConfig',
+    'oath.apps.OathConfig',
     'ai_assistant.apps.AiAssistantConfig',
     'rest_framework',
     'rest_framework_simplejwt',
