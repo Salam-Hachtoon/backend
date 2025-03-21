@@ -1,13 +1,14 @@
 import requests, logging
 from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
+from rest_framework.permissions import AllowAny # type: ignore
+from rest_framework.response import Response # type: ignore
 from rest_framework import status # type: ignore
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes # type: ignore
 from django.conf import settings
 from django.shortcuts import redirect
-
+from ..users.serializers import UserSerializer
+from .utility import generate_jwt_tokens
 
 # Create the looger instance for the celery tasks
 loger = logging.getLogger('requests')
@@ -106,16 +107,28 @@ def google_callback(request):
     user.save()
 
     # Generate JWT Token
-    refresh = RefreshToken.for_user(user)
+    access_token, refresh_token = generate_jwt_tokens(user)
 
-    return Response({
-        "message": "Login successful",
-        "access_token": str(refresh.access_token),
-        "refresh_token": str(refresh),
-        "user": {
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "profile_picture": profile_picture,
-        }
-    })
+    # Serialize the user data
+    user_serializer = UserSerializer(user)
+
+    response = Response(
+        {
+            'message': 'Login successful.',
+            'user': user_serializer.data,
+            'access_token': access_token,
+            # 'refresh_token': refresh_token
+        },
+        status=status.HTTP_200_OK
+    )
+
+    # Set refresh token as an HTTP-only cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=str(refresh_token),
+        httponly=True,  # Security feature
+        secure=True,  # Use only in HTTPS
+        samesite="Lax",  # Protect against CSRF
+    )
+
+    return response
