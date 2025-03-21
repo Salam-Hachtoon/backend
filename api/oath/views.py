@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny # type: ignore
 from rest_framework.response import Response # type: ignore
 from rest_framework import status # type: ignore
 from rest_framework.decorators import api_view, permission_classes # type: ignore
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.shortcuts import redirect
 from .serializers import UserSerializer
@@ -18,6 +19,7 @@ User = get_user_model()
 
 
 @permission_classes([AllowAny])
+@csrf_exempt
 def google_login(request):
     """
     Redirect user to Google's OAuth 2.0 authentication page.
@@ -35,7 +37,41 @@ def google_login(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@csrf_exempt
 def google_callback(request):
+    """
+    Handles the Google OAuth2 callback to authenticate a user.
+    This function processes the authorization code returned by Google, exchanges it
+    for an access token, retrieves user information, and either logs in the user
+    or creates a new user account. It also generates JWT tokens for the user and
+    sets the refresh token as an HTTP-only cookie.
+    Args:
+        request (HttpRequest): The HTTP request object containing the authorization
+                               code in the query parameters.
+    Returns:
+        Response: A DRF Response object containing the login status, user data,
+                  and access token. If an error occurs, an appropriate error
+                  message and status code are returned.
+    Workflow:
+        1. Extract the authorization code from the query parameters.
+        2. Exchange the authorization code for an access token using Google's token endpoint.
+        3. Use the access token to fetch the user's profile information from Google.
+        4. Check if the user exists in the database; if not, create a new user.
+        5. Generate JWT tokens (access and refresh) for the user.
+        6. Return the user data and access token in the response, and set the refresh
+           token as an HTTP-only cookie.
+    Raises:
+        KeyError: If required settings like GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET
+                  are missing.
+        Exception: If there are issues with the token exchange or user creation.
+    Notes:
+        - Ensure that the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are correctly
+          configured in the Django settings.
+        - The `redirect_uri` must match the one configured in the Google API Console.
+        - The `User` model is assumed to have fields for `email`, `first_name`,
+          `last_name`, and a related `profile` with a `picture` field.
+    """
+
     # Get the code from the query parameters
     code = request.GET.get("code")
 
