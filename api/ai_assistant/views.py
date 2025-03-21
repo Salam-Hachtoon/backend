@@ -89,30 +89,26 @@ def upload_attachments(request):
 @permission_classes([IsAuthenticated])
 def get_summary(request):
     """
-    Handles the generation of a summary for a batch of files.
-    This view function processes a batch of files identified by a batch ID, 
-    combines their content, and generates a summary using an external AI service. 
-    The generated summary is saved to the database and returned in the response.
+    Handles the generation of a summary for a batch of files based on their extracted text content.
     Args:
-        request (HttpRequest): The HTTP request object containing user information 
-                               and batch ID in the request data.
+        request (HttpRequest): The HTTP request object containing user authentication and batch ID.
     Returns:
-        Response: A Django REST framework Response object with the following:
-            - HTTP 201 Created: If the summary is successfully generated and saved.
-            - HTTP 400 Bad Request: If the batch ID is not provided or not all files 
-              in the batch have been processed.
-            - HTTP 404 Not Found: If no files are found for the given batch ID.
-            - HTTP 500 Internal Server Error: If the summary generation fails.
+        Response: A Django REST framework Response object with the following possible outcomes:
+            - HTTP 400 BAD REQUEST: If the batch ID is not provided or not all files have been processed.
+            - HTTP 404 NOT FOUND: If no files are found for the given batch ID.
+            - HTTP 500 INTERNAL SERVER ERROR: If there is a failure in generating or parsing the summary.
+            - HTTP 201 CREATED: If the summary is successfully created.
+    Workflow:
+        1. Retrieves the authenticated user from the request.
+        2. Extracts the batch ID from the request data.
+        3. Queries the database for attachments associated with the given batch ID.
+        4. Combines the text content of all completed files for the batch.
+        5. Calls an external AI service to generate a summary from the combined text.
+        6. Parses and validates the AI service's response.
+        7. Creates a new summary object in the database and serializes it for the response.
     Raises:
         KeyError: If the batch ID is not provided in the request data.
-    Workflow:
-        1. Retrieve the authenticated user from the request.
-        2. Extract the batch ID from the request data.
-        3. Query the database for attachments associated with the batch ID.
-        4. Combine the content of all completed files in the batch.
-        5. Call an external AI service to generate a summary from the combined content.
-        6. Save the generated summary to the database.
-        7. Serialize and return the summary in the response.
+        json.JSONDecodeError: If the AI service's response cannot be parsed as JSON.
     """
 
     user = request.user  # Get the authenticated user
@@ -157,10 +153,34 @@ def get_summary(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    # Creates the new summary
+    # Clean the JSON string
+    cleaned_json_string = clean_json_string(deepseek_response)
+    try:
+        # Parse the cleaned JSON string
+        parsed_response = json.loads(cleaned_json_string)
+        summary_content = parsed_response.get("summary", {}).get("content", "")
+    except json.JSONDecodeError:
+        loger.error("Failed to parse summary response.")
+        return Response(
+            {
+                "message": "Failed to parse summary response."
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    if not summary_content:
+        loger.error("Summary content is missing in the response.")
+        return Response(
+            {
+                "message": "Summary content is missing in the response."
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+    # Create the new summary
     new_summary = Summary.objects.create(
         user=user,
-        content=deepseek_response
+        content=summary_content
     )
     new_summary.save()
 

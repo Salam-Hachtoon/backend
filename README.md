@@ -92,6 +92,8 @@ python manage.py runserver
 
 ### **7. Start Celery Worker and Beat**
 ```bash
+# Go to the project dir.
+cd api
 # Start the Celery worker
 celery -A api worker --loglevel=info
 
