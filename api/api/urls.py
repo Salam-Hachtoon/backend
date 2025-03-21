@@ -24,9 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('users.urls')),
     path('api/v1/', include('ai_assistant.urls')),
-    path('api/auth/', include('dj_rest_auth.urls')),  # Login, Logout, User Details
-    path('api/auth/registration/', include('dj_rest_auth.registration.urls')),  # Signup
-    path('api/auth/social/', include('allauth.socialaccount.urls')),  # Google OAuth
+    path('api/v1/', include('oath.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
