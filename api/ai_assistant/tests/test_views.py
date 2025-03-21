@@ -1,3 +1,4 @@
+import os, time
 from django.urls import reverse
 from rest_framework.test import APITestCase # type: ignore
 from rest_framework import status # type: ignore
@@ -7,6 +8,8 @@ from users.models import User
 from unittest.mock import patch
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.urls import reverse
+from ..models import Attachment
 
 
 class AiAssistantViewsTests(APITestCase):
@@ -36,14 +39,17 @@ class AiAssistantViewsTests(APITestCase):
         self.get_user_attachments_url = reverse('get_user_attachments')  # Replace with actual URL name
 
     def test_upload_attachments_success(self):
-        files = [
-            SimpleUploadedFile(name='file1.txt', content=b'Test content 1', content_type='text/plain'),
-            SimpleUploadedFile(name='file2.txt', content=b'Test content 2', content_type='text/plain')
-        ]
-        response = self.client.post(self.upload_attachments_url, {'files': files}, format='multipart')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['message'], 'Files uploaded successfully.')
-        self.assertTrue(Attachment.objects.filter(user=self.user).exists())
+        self.file_path = os.path.join(os.path.dirname(__file__), 'attachments', 'test_1.pdf')
+        with open(self.file_path, 'rb') as file:
+            files = [
+                SimpleUploadedFile(name='test_1.pdf', content=file.read(), content_type='application/pdf'),
+                SimpleUploadedFile(name='test_2.pdf', content=file.read(), content_type='application/pdf')
+            ]
+            response = self.client.post(self.upload_attachments_url, {'files': files}, format='multipart')
+            time.sleep(10)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(response.data['message'], 'Files uploaded successfully.')
+            self.assertTrue(Attachment.objects.filter(user=self.user).exists())
 
     def test_get_summary_success(self):
         # Mock the AI service response
@@ -52,8 +58,8 @@ class AiAssistantViewsTests(APITestCase):
 
             # Create attachments for the batch
             batch_id = '12345'
-            Attachment.objects.create(user=self.user, file='file1.txt', batch_id=batch_id, status='completed')
-
+            Attachment.objects.create(user=self.user, file='file1.pdf', batch_id=batch_id, status='completed')
+            
             response = self.client.post(self.get_summary_url, {'batch_id': batch_id})
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.assertEqual(response.data['message'], 'Summary created successfully.')
@@ -135,3 +141,4 @@ class AiAssistantViewsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], 'User attachments retrieved successfully.')
         self.assertEqual(len(response.data['data']), 2)
+
