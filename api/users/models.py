@@ -57,8 +57,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)  # Required for admin access
     gender = models.CharField( # Only one option can be selected here
         max_length=1,
+        null=True, # filed can be null
         choices=GENDER_CHOICES,
-        default=MALE  # Default value (optional), coz men are asome
+        default=None  # Default value (optional), coz men are asome
     )
     # No password field is not explicitly defined
     # because it is inherited from Django's AbstractBaseUser class,
