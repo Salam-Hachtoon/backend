@@ -45,10 +45,18 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 EMAIL_SUBJECT_PREFIX = env('EMAIL_SUBJECT_PREFIX')
 EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT')
 
+# Retrieve the DEEPSEEK_API_KEY from the environment
+DEEPSEEK_API_KEY = env('DEEPSEEK_API_KEY')
+DEEPSEEK_API_URL = env('DEEPSEEK_API_URL')
+# Retrieve google credentials
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
+
 
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,6 +64,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users.apps.UsersConfig',
+    'oath.apps.OathConfig',
     'ai_assistant.apps.AiAssistantConfig',
     'rest_framework',
     'rest_framework_simplejwt',
@@ -77,7 +86,7 @@ REST_FRAMEWORK = {
 
 # JWT Settings for the access and refresh tokens
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Set the access token expiration to 15 minutes
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),  # Set the access token expiration to 15 minutes
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Set the refresh token expiration to 7 days
     'ROTATE_REFRESH_TOKENS': True,                   # Whether to rotate refresh tokens
     'BLACKLIST_AFTER_ROTATION': True,                # If True, blacklists the old refresh token when a new one is issued
@@ -154,6 +163,14 @@ LOGGING ={
             "backupCount": 5,  # Keep 5 old log files
             "formatter": "verbose",
         },
+        "attachment_process_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/attachment.log"),
+            "maxBytes": 5 * 1024 * 1024,  # 5MB per log file
+            "backupCount": 5,  # Keep 5 old log files
+            "formatter": "verbose",
+        },
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
@@ -202,11 +219,17 @@ LOGGING ={
             'level': 'ERROR',
             'propagate': False,
         },
+       'attachment': {
+            'handlers': ['attachment_process_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
    }
 }
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Must be first!
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -292,6 +315,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# CORS Settings
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
