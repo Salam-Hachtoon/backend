@@ -55,6 +55,7 @@ GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -225,6 +226,7 @@ LOGGING ={
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Must be first!
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -286,6 +288,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# CORS Settings
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
