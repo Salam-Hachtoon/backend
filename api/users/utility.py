@@ -1,9 +1,8 @@
-import logging
+import logging, os
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-import os
 
 
 # Create a utility logger

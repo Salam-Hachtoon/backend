@@ -31,27 +31,31 @@ class AttachmentModelTests(TestCase):
             email='testuser@example.com',
             password='testpassword123'
         )
-        self.attachment = Attachment.objects.create(
-            user=self.user,
-            file=SimpleUploadedFile("test_file.txt", b"file_content"),
-            extracted_text="Extracted text content",
-            status="completed"
-        )
+        self.file_path = os.path.join(os.path.dirname(__file__), 'attachments', 'test_1.pdf')
+        with open(self.file_path, 'rb') as file:
+            self.attachment = Attachment.objects.create(
+                user=self.user,
+                file=SimpleUploadedFile(name='test_1.pdf', content=file.read(), content_type='application/pdf'),
+                extracted_text="Extracted text content",
+                status="completed"
+            )
 
     def test_attachment_creation(self):
         self.assertEqual(self.attachment.user, self.user)
-        self.assertTrue(self.attachment.file.name.startswith("attachments/test_file"))
-        self.assertTrue(self.attachment.file.name.endswith(".txt"))
-        self.assertEqual(self.attachment.extracted_text, "Extracted text content")
+        self.assertTrue(self.attachment.file.name.startswith("attachments/"))
+        self.assertTrue(self.attachment.file.name.endswith(".pdf"))
+        self.assertEqual(self.attachment.extracted_text, "Hiba Hanafi Mohamed 30/07/2024 *Earners of this badge have completed the McKinsey Forward online learning program. This program enables participants to develop practical skills for success in the future of work. Participants learn how to apply the McKinsey approach to problem- solving, become more effective and influential communicators and develop adaptable and resilience mindsets and habits. They also learn how to plan for and develop a foundational digital toolkit. *Please note that McKinsey is not an accredited education body, and thus participants of the Forward program will not receive an accredited qualification or credential. Powered by PDF Generator API _________________________________	")
         self.assertEqual(self.attachment.status, "completed")
         self.assertIsNotNone(self.attachment.uploaded_at)
 
     def test_attachment_default_status(self):
-        attachment = Attachment.objects.create(
-            user=self.user,
-            file=SimpleUploadedFile("default_status_file.txt", b"file_content")
-        )
-        self.assertEqual(attachment.status, "processing")
+        self.file_path = os.path.join(os.path.dirname(__file__), 'attachments', 'test_1.pdf')
+        with open(self.file_path, 'rb') as file:
+            attachment = Attachment.objects.create(
+                user=self.user,
+                file=SimpleUploadedFile(name='test_1.pdf', content=file.read(), content_type='application/pdf')
+            )
+            self.assertEqual(attachment.status, "processing")
 
     def test_attachment_str_method(self):
         self.assertEqual(str(self.attachment), f"{self.user} - {self.attachment.file.name}")
@@ -76,15 +80,17 @@ class SummaryModelTests(TestCase):
             email='testuser@example.com',
             password='testpassword123'
         )
-        self.attachment = Attachment.objects.create(
-            user=self.user,
-            file=SimpleUploadedFile("test_file.txt", b"file_content")
-        )
-        self.summary = Summary.objects.create(
-            user=self.user,
-            attachment=self.attachment,
-            content="This is a test summary."
-        )
+        self.file_path = os.path.join(os.path.dirname(__file__), 'attachments', 'test_1.pdf')
+        with open(self.file_path, 'rb') as file:
+            self.attachment = Attachment.objects.create(
+                user=self.user,
+                file=SimpleUploadedFile(name='test_1.pdf', content=file.read(), content_type='application/pdf')
+            )
+            self.summary = Summary.objects.create(
+                user=self.user,
+                attachment=self.attachment,
+                content="This is a test summary."
+            )
 
     def test_summary_creation(self):
         self.assertEqual(self.summary.user, self.user)
