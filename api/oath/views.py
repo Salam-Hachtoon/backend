@@ -17,7 +17,7 @@ loger = logging.getLogger('requests')
 # Get the user model
 User = get_user_model()
 
-
+@api_view(['GET'])
 @permission_classes([AllowAny])
 @csrf_exempt
 def google_login(request):
