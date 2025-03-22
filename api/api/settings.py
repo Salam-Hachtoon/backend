@@ -30,6 +30,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', default=False)
 
+
 ALLOWED_HOSTS = []
 
 # Email configuration using environment variables
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'corsheaders',
 ]
+
 
 # Rest Framework Settings using JWT for authentication
 REST_FRAMEWORK = {
@@ -318,3 +320,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # Directory where uploaded files w
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # The custom user model that will handel the outh
 AUTH_USER_MODEL = 'users.User'
+
