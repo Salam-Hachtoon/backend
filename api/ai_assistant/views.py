@@ -84,6 +84,87 @@ def upload_attachments(request):
     )
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def check_attachments(request):
+    """
+    Handles the checking of attachments for a given batch ID.
+    This function retrieves attachments associated with a batch ID from the request,
+    checks their processing status, and returns an appropriate response.
+    Args:
+        request (Request): The HTTP request object containing the batch ID in its data.
+    Returns:
+        Response: A Django REST framework Response object with the following possible outcomes:
+            - HTTP 400 BAD REQUEST: If the batch ID is not provided or not all files are processed.
+            - HTTP 404 NOT FOUND: If no files are found for the given batch ID.
+            - HTTP 200 OK: If all files have been processed.
+    Raises:
+        KeyError: If the batch ID is not present in the request data.
+    Response Structure:
+        - If batch ID is missing:
+            }
+        - If no files are found:
+                "message": "No files found for batch ID: <batch_id>"
+            }
+        - If all files are processed:
+                "processed_files": [<list_of_processed_file_names>]
+            }
+        - If not all files are processed:
+                "unprocessed_files": [<list_of_unprocessed_file_names>]
+            }
+    """
+
+    try:
+        batch_id = request.data.get('batch_id')
+    except KeyError:
+        loger.error("Batch ID not provided.")
+        return Response(
+            {
+                "message": "Batch ID not provided."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Query all attachments with the given batch_id
+    attachments = Attachment.objects.filter(batch_id=batch_id)
+
+    # Check if any files are found for the given batch ID
+    if not attachments.exists():
+        loger.error("No files found for batch ID: {}".format(batch_id))
+        return Response(
+            {
+                "message": "No files found for batch ID: {}".format(batch_id)
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Check the status of all files
+    processed_files = []
+    unprocessed_files = []
+    # Iterate over the attachments
+    for attachment in attachments:
+        if attachment.status == 'completed':
+            processed_files.append(attachment.file.name)
+        else:
+            unprocessed_files.append(attachment.file.name)
+
+    if not unprocessed_files:
+        return Response(
+            {
+                "message": "All files have been processed.",
+                "processed_files": processed_files
+            },
+            status=status.HTTP_200_OK
+        )
+    else:
+        return Response(
+            {
+                "message": "Not all files have been processed yet.",
+                "unprocessed_files": unprocessed_files
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

@@ -35,7 +35,7 @@ def google_login(request):
 
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([AllowAny])
 @csrf_exempt
 def google_callback(request):

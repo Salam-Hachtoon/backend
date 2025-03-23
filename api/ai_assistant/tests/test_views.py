@@ -13,6 +13,25 @@ from ..models import Attachment
 
 
 class AiAssistantViewsTests(APITestCase):
+    """
+    Unit tests for the AI Assistant views.
+    This test suite includes the following test cases:
+    1. `test_upload_attachments_success`: Tests the successful upload of attachments.
+    2. `test_get_summary_success`: Tests the successful generation of a summary using the AI service.
+    3. `test_get_flash_cards_success`: Tests the successful generation of flashcards from a summary using the AI service.
+    4. `test_get_quiz_success`: Tests the successful generation of a quiz from a summary using the AI service.
+    5. `test_create_bookmark_success`: Tests the successful creation of a bookmark for a summary.
+    6. `test_get_user_summaries`: Tests retrieving all summaries created by the user.
+    7. `test_get_user_flashcards`: Tests retrieving all flashcards associated with the user's summaries.
+    8. `test_get_user_quizzes`: Tests retrieving all quizzes associated with the user's summaries.
+    9. `test_get_user_attachments`: Tests retrieving all attachments uploaded by the user.
+    10. `test_check_attachments_success_all_processed`: Tests checking the status of attachments when all files are processed.
+    11. `test_check_attachments_success_some_unprocessed`: Tests checking the status of attachments when some files are still unprocessed.
+    12. `test_check_attachments_no_files_found`: Tests checking the status of attachments when no files are found for the given batch ID.
+    13. `test_check_attachments_missing_batch_id`: Tests checking the status of attachments when the batch ID is not provided.
+    Each test case ensures that the corresponding view behaves as expected under various conditions.
+    """
+    
     def setUp(self):
         # Create a test user
         self.user = User.objects.create_user(
@@ -141,4 +160,40 @@ class AiAssistantViewsTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], 'User attachments retrieved successfully.')
         self.assertEqual(len(response.data['data']), 2)
+
+    def test_check_attachments_success_all_processed(self):
+        # Create attachments for the batch
+        batch_id = '12345'
+        Attachment.objects.create(user=self.user, file='file1.pdf', batch_id=batch_id, status='completed')
+        Attachment.objects.create(user=self.user, file='file2.pdf', batch_id=batch_id, status='completed')
+
+        response = self.client.post(reverse('check_attachments'), {'batch_id': batch_id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'All files have been processed.')
+        self.assertEqual(len(response.data['processed_files']), 2)
+
+    def test_check_attachments_success_some_unprocessed(self):
+        # Create attachments for the batch
+        batch_id = '12345'
+        Attachment.objects.create(user=self.user, file='file1.pdf', batch_id=batch_id, status='completed')
+        Attachment.objects.create(user=self.user, file='file2.pdf', batch_id=batch_id, status='pending')
+
+        response = self.client.post(reverse('check_attachments'), {'batch_id': batch_id})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], 'Not all files have been processed yet.')
+        self.assertEqual(len(response.data['unprocessed_files']), 1)
+
+    def test_check_attachments_no_files_found(self):
+        # Use a batch ID that does not exist
+        batch_id = 'nonexistent_batch'
+
+        response = self.client.post(reverse('check_attachments'), {'batch_id': batch_id})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['message'], f'No files found for batch ID: {batch_id}')
+
+    def test_check_attachments_missing_batch_id(self):
+        response = self.client.post(reverse('check_attachments'), {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], 'Batch ID not provided.')
+
 
