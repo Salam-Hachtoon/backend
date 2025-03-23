@@ -65,7 +65,63 @@ files: [File, File, File]  // Maximum 3 files
 
 ---
 
-## 2. Generate Summary  
+## 2. Check Attachments Status  
+**Endpoint:**  
+`POST /check_attachments/`
+
+**Description:**  
+Checks the processing status of uploaded files based on a given batch ID.
+
+**Authentication:**  
+✅ Required (Bearer Token)
+
+**Request Headers:**
+```json
+{
+  "Authorization": "Bearer <access_token>"
+}
+```
+
+**Request Body (JSON):**
+```json
+{
+  "batch_id": "1712345678"
+}
+```
+
+**Success Responses:**  
+- **Status Code:** `200 OK` (All files processed)
+```json
+{
+  "message": "All files have been processed.",
+  "processed_files": ["file1.pdf", "file2.pdf"]
+}
+```
+- **Status Code:** `400 Bad Request` (Some files are still processing)
+```json
+{
+  "message": "Not all files have been processed yet.",
+  "unprocessed_files": ["file3.pdf"]
+}
+```
+
+**Error Responses:**  
+- **400 Bad Request** (Batch ID not provided)
+```json
+{
+  "message": "Batch ID not provided."
+}
+```
+- **404 Not Found** (No files found for the batch)
+```json
+{
+  "message": "No files found for batch ID: 1712345678"
+}
+```
+
+---
+
+## 3. Generate Summary  
 **Endpoint:**  
 `POST /get_summary/`
 
@@ -129,7 +185,7 @@ Generates a text summary from uploaded files based on their batch ID.
 
 ---
 
-## 3. Generate Flashcards  
+## 4. Generate Flashcards  
 **Endpoint:**  
 `POST /get_flash_cards/`
 
@@ -195,7 +251,7 @@ Generates flashcards based on an existing summary.
 
 ---
 
-## 4. Generate Quiz  
+## 5. Generate Quiz  
 **Endpoint:**  
 `POST /get_quiz/`
 
@@ -260,7 +316,7 @@ Generates a quiz based on a summary’s content and a difficulty level.
 - **400 Bad Request** (Missing summary ID or difficulty level)
 ```json
 {
-  "message": "Either summary id or difficulty level not provided."
+  "message": "Either summary ID or difficulty level not provided."
 }
 ```
 - **404 Not Found** (Summary does not exist)
