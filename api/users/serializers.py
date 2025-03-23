@@ -1,6 +1,7 @@
 import os, logging
 from rest_framework import serializers # type: ignore
 from .models import User
+import re
 
 
 # Create the looger instance for the celery tasks
@@ -36,7 +37,6 @@ class UserSerializer(serializers.ModelSerializer):
     """
 
     # Set the password field as write-only to prevent it from being serialized
-    password = serializers.CharField(write_only=True, min_length=6)
 
     class Meta:
         model = User
@@ -55,6 +55,27 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'required': True},
             'gender': {'required': False}
         }
+
+    def validate_password(self, value):
+        """
+        Custom validation for the password field.
+        """
+        # Check for minimum length (already handled by min_length=6)
+        if len(value) < 7:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+
+        # Check for at least one uppercase letter
+        if not re.search('[A-Z]', value):
+            raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+
+        # Check for at least one punctuation mark
+        if not re.search('[!@#$%^&*(),.?":{}|<>]', value):
+            raise serializers.ValidationError("Password must contain at least one punctuation mark.")
+
+        if not re.search('[0-9]', value):
+            raise serializers.ValidationError("Password must have at least one number.")
+
+        return value
 
     def validate_profile_picture(self, image):
         allowed_image_extensions = ['jpg', 'jpeg', 'png']
@@ -94,7 +115,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """
 
     # Set the password field as write-only to prevent it from being serialized
-    password = serializers.CharField(write_only=True, min_length=6)
+
 
     class Meta:
         model = User
@@ -106,6 +127,24 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             'password',
             'gender'
         ]
+
+        def validate_password(self, value):
+            """
+            Custom validation for the password field.
+            """
+            # Check for minimum length (already handled by min_length=6)
+            if len(value) < 7:
+                raise serializers.ValidationError("Password must be at least 8 characters long.")
+
+            # Check for at least one uppercase letter
+            if not re.search('[A-Z]', value):
+                raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+
+            # Check for at least one punctuation mark
+            if not re.search('[!@#$%^&*(),.?":{}|<>]', value):
+                raise serializers.ValidationError("Password must contain at least one punctuation mark.")
+
+            return value
 
     def  validate_profile_picture(self, image):
             allowed_image_extensions = ['jpg', 'jpeg', 'png']

@@ -1,4 +1,6 @@
 import logging
+from http.client import responses
+
 from rest_framework.decorators import api_view, permission_classes # type: ignore
 from rest_framework.response import Response # type: ignore
 from rest_framework.permissions import AllowAny, IsAuthenticated # type: ignore
@@ -43,10 +45,14 @@ def signup(request):
         )
     if serializer.is_valid():
         serializer.save()
+
+        responses_data = serializer.data.copy()
+        del responses_data['password']
+
         return Response(
             {
                 'message': 'User created successfully.',
-                'data': serializer.data
+                'data': responses_data
             },
             status=status.HTTP_201_CREATED
         )
@@ -296,10 +302,15 @@ def update_account(request):
         user.profile_picture = request.FILES['profile_picture']  # Save the image
     # Save the updated user data
     serializer.save()
+
+    # Dont send password fields
+    responses_data = serializer.data.copy()
+    del responses_data['password']
+
     return Response(
         {
             'message': 'User updated successfully.',
-            'data': serializer.data
+            'data': responses_data
         },
         status=status.HTTP_200_OK
     )

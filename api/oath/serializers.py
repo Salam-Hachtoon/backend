@@ -1,6 +1,7 @@
 import os, logging
 from rest_framework import serializers # type: ignore
 from users.models import User
+import re
 
 
 # Create the looger instance for the celery tasks
@@ -35,8 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
                 User: The newly created user instance.
     """
 
-    # Set the password field as write-only to prevent it from being serialized
-    password = serializers.CharField(write_only=True, min_length=6)
+
 
     class Meta:
         model = User
@@ -55,6 +55,24 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'required': False},
             'gender': {'required': False}
         }
+
+    def validate_password(self, value):
+        """
+        Custom validation for the password field.
+        """
+        # Check for minimum length (already handled by min_length=6)
+        if len(value) < 7:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+
+        # Check for at least one uppercase letter
+        if not re.search('[A-Z]', value):
+            raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+
+        # Check for at least one punctuation mark
+        if not re.search('[!@#$%^&*(),.?":{}|<>]', value):
+            raise serializers.ValidationError("Password must contain at least one punctuation mark.")
+
+        return value
 
     def validate_profile_picture(self, image):
         allowed_image_extensions = ['jpg', 'jpeg', 'png']
