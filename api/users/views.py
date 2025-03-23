@@ -34,7 +34,7 @@ def signup(request):
     """
     
     serializer = UserSerializer(data=request.data)
-    if User.objects.filter(email=request.data['email']).exists():
+    if User.objects.filter(email=request.data.get('email', None)).exists():
         # Log the error message
         loger.error('User already exists.')
         return Response(
